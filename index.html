@@ -968,28 +968,145 @@ function saveKey() {
   document.getElementById('key-status').textContent = apiKey ? '✓ Key saved (session only)' : 'No key entered.';
 }
 
+/* =========================================================
+   FALLBACK: local fuzzy match when no API key
+   ========================================================= */
+function localFallback(input) {
+  const q = input.toLowerCase();
+
+  // 1. match tumor type
+  const tumorMap = {
+    pancreatic: ['pancrea','pdac','pancreas'],
+    breast:     ['breast','mammary','her2','tnbc','triple negative'],
+    glioma:     ['glio','brain','gbm','gbm','astro','cerebr'],
+    melanoma:   ['melanoma','skin','cutaneous'],
+    colorectal: ['colorect','colon','rectal','crc'],
+  };
+  let matchedTumor = 'breast';
+  for (const [tumor, keys] of Object.entries(tumorMap)) {
+    if (keys.some(k => q.includes(k))) { matchedTumor = tumor; break; }
+  }
+
+  // 2. match drug name
+  const drugMap = {
+    doxorubicin:   ['doxorubicin','doxo','adriamycin'],
+    paclitaxel:    ['paclitaxel','taxol','taxane'],
+    cisplatin:     ['cisplatin','cis-platin','platinum'],
+    gemcitabine:   ['gemcitabine','gemzar'],
+    trastuzumab:   ['trastuzumab','herceptin','antibody','adc','her2'],
+    '5_fluorouracil':['fluorouracil','5-fu','5fu'],
+    temozolomide:  ['temozolomide','temodar','tmz'],
+    dacarbazine:   ['dacarbazine','dtic'],
+  };
+  let matchedDrug = null;
+  for (const [drug, keys] of Object.entries(drugMap)) {
+    if (keys.some(k => q.includes(k))) { matchedDrug = drug; break; }
+  }
+
+  // 3. find best DB entry
+  let entry = null;
+  if (matchedDrug) {
+    entry = DB.find(d =>
+      d.drug.toLowerCase().replace(/[\s-]/g,'_') === matchedDrug &&
+      d.tumor === matchedTumor
+    );
+  }
+  if (!entry) {
+    entry = DB.find(d => d.tumor === matchedTumor);
+  }
+  if (!entry) entry = DB[0];
+
+  // 4. build difficulty notes
+  const diffNotes = {
+    'low':       'Drug transport is expected to be relatively unimpeded. Good tissue penetration predicted.',
+    'medium':    'Moderate penetration barriers present. Drug should reach most of the tumor volume.',
+    'high':      'Significant penetration barriers. Elevated IFP or dense stroma may limit drug delivery.',
+    'very high': 'Severe penetration barriers. High stromal density and IFP severely restrict drug access to tumor core.',
+  };
+
+  return {
+    drug:                   entry.drug,
+    tumor:                  entry.tumor,
+    D:                      entry.D,
+    lam:                    entry.lam,
+    k:                      entry.k,
+    tumor_radius:           entry.r,
+    penetration_difficulty: entry.diff,
+    drug_class:             entry.cls,
+    notes:                  diffNotes[entry.diff] +
+      ` Parameters estimated from local database (no API key). D=${entry.D}, λ=${entry.lam}, k=${entry.k}.`,
+    source: 'local'
+  };
+}
+
+function showParams(params, resp, tags, preview) {
+  resp.className = 'ai-response';
+  resp.textContent = params.notes || 'Parameters extracted.';
+
+  const sourceTag = params.source === 'local'
+    ? `<span class="tag amber" style="margin-left:4px;">local DB — no API key</span>`
+    : `<span class="tag green" style="margin-left:4px;">Claude API</span>`;
+
+  tags.innerHTML = [
+    `drug: ${params.drug}`,
+    `tumor: ${params.tumor}`,
+    `D = ${params.D}`,
+    `λ = ${params.lam}`,
+    `k = ${params.k}`,
+    `r = ${params.tumor_radius}px`,
+    `difficulty: ${params.penetration_difficulty}`,
+    `class: ${params.drug_class||'—'}`
+  ].map((t,i)=>`<span class="tag ${i===6?'amber':i===0?'blue':''}">${t}</span>`).join('') + sourceTag;
+
+  aiParams = params;
+  preview.style.display = '';
+  const pb = document.getElementById('ai-param-body');
+  pb.innerHTML = [
+    ['Drug',           params.drug,                    '—'],
+    ['Tumor',          params.tumor,                   '—'],
+    ['D (diffusion)',  params.D,                       'Molecular weight / tissue tortuosity'],
+    ['λ (degradation)',params.lam,                     'Metabolic clearance rate'],
+    ['k (uptake)',     params.k,                       'Receptor/transporter expression'],
+    ['Tumor radius',   params.tumor_radius+' px',      'Anatomical estimate'],
+    ['Difficulty',     params.penetration_difficulty,  'Overall penetration barrier'],
+    ['Source',         params.source==='local' ? 'Local database (fallback)' : 'Claude API', ''],
+  ].map(([n,v,note])=>`<tr><td>${n}</td><td><strong>${v}</strong></td><td style="color:#8b949e;font-size:.8rem;">${note}</td></tr>`).join('');
+}
+
 async function askAI() {
   const input = document.getElementById('ai-input').value.trim();
   if (!input) return;
-  const btn  = document.getElementById('ai-btn');
-  const resp = document.getElementById('ai-response');
-  const tags = document.getElementById('ai-tags');
+  const btn    = document.getElementById('ai-btn');
+  const resp   = document.getElementById('ai-response');
+  const tags   = document.getElementById('ai-tags');
   const preview = document.getElementById('ai-preview');
 
   btn.disabled = true;
-  resp.className = 'ai-response thinking';
-  resp.textContent = 'Claude is analysing…';
-  tags.innerHTML   = '';
+  tags.innerHTML = '';
   preview.style.display = 'none';
 
-  const key = apiKey || '';
+  // ── No API key → use local fallback immediately ──
+  if (!apiKey) {
+    resp.className = 'ai-response thinking';
+    resp.textContent = 'No API key detected — matching from local database…';
+    await new Promise(r => setTimeout(r, 600)); // brief pause so user sees the message
+    const params = localFallback(input);
+    showParams(params, resp, tags, preview);
+    btn.disabled = false;
+    return;
+  }
+
+  // ── API key present → call Claude ──
+  resp.className = 'ai-response thinking';
+  resp.textContent = 'Claude is analysing…';
 
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(key ? { 'x-api-key': key, 'anthropic-version': '2023-06-01' } : {})
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
@@ -1014,40 +1131,22 @@ lam reflects metabolic stability. k reflects receptor/transporter expression.`,
     });
 
     const data = await res.json();
-    const text = (data.content?.find(b=>b.type==='text')?.text || '').replace(/```json|```/g,'').trim();
+    const text = (data.content?.find(b=>b.type==='text')?.text||'').replace(/```json|```/g,'').trim();
     let params;
-    try { params = JSON.parse(text); } catch(e) { throw new Error('Could not parse response.'); }
-
-    resp.className = 'ai-response';
-    resp.textContent = params.notes || 'Parameters extracted.';
-    tags.innerHTML = [
-      `drug: ${params.drug}`,
-      `tumor: ${params.tumor}`,
-      `D = ${params.D}`,
-      `λ = ${params.lam}`,
-      `k = ${params.k}`,
-      `r = ${params.tumor_radius}px`,
-      `difficulty: ${params.penetration_difficulty}`,
-      `class: ${params.drug_class||'—'}`
-    ].map((t,i)=>`<span class="tag ${i===6?'amber':i===0?'blue':''}">  ${t}</span>`).join('');
-
-    aiParams = params;
-    preview.style.display = '';
-    const pb = document.getElementById('ai-param-body');
-    pb.innerHTML = [
-      ['Drug',params.drug,'—'],
-      ['Tumor',params.tumor,'—'],
-      ['D (diffusion)',params.D,'Molecular weight / tissue tortuosity'],
-      ['λ (degradation)',params.lam,'Metabolic clearance rate'],
-      ['k (uptake)',params.k,'Receptor/transporter expression'],
-      ['Tumor radius',params.tumor_radius+' px','Anatomical estimate'],
-      ['Difficulty',params.penetration_difficulty,'Overall penetration barrier'],
-    ].map(([n,v,note])=>`<tr><td>${n}</td><td><strong>${v}</strong></td><td style="color:#8b949e;font-size:.8rem;">${note}</td></tr>`).join('');
+    try { params = JSON.parse(text); } catch(e) { throw new Error('Could not parse Claude response.'); }
+    params.source = 'claude';
+    showParams(params, resp, tags, preview);
 
   } catch(e) {
-    resp.className = 'ai-response error';
-    resp.textContent = `Error: ${e.message}. Check your API key and network.`;
+    // ── API failed → graceful fallback ──
+    resp.className = 'ai-response thinking';
+    resp.textContent = `API unavailable (${e.message}) — falling back to local database…`;
+    await new Promise(r => setTimeout(r, 800));
+    const params = localFallback(input);
+    params.notes = `[API error — local fallback used] ` + params.notes;
+    showParams(params, resp, tags, preview);
   }
+
   btn.disabled = false;
 }
 
