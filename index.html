@@ -4,244 +4,209 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PDEOncology — Tumor Drug Penetration Simulator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
-    /* =====================================================
-       RESET + BASE
-       ===================================================== */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { font-size: 16px; }
-    body {
-      font-family: 'IBM Plex Mono', 'Courier New', monospace;
-      background: #0a0e14;
-      color: #c9d1d9;
-      min-height: 100vh;
+    :root {
+      --bg:        #080c12;
+      --bg1:       #0d1117;
+      --bg2:       #111820;
+      --bg3:       #161d27;
+      --border:    rgba(99,130,166,0.12);
+      --border2:   rgba(99,130,166,0.22);
+      --text:      #e2eaf4;
+      --text2:     #8b9bb4;
+      --text3:     #4d5f73;
+      --blue:      #4d9eff;
+      --blue-dim:  rgba(77,158,255,0.12);
+      --green:     #3de383;
+      --green-dim: rgba(61,227,131,0.1);
+      --amber:     #f0a54a;
+      --amber-dim: rgba(240,165,74,0.1);
+      --red:       #f05b5b;
+      --cyan:      #00e5ff;
+      --purple:    #a78bfa;
+      --mono:      'Space Mono','Courier New',monospace;
+      --sans:      'Inter',system-ui,sans-serif;
+      --radius:    8px;
+      --radius-lg: 14px;
     }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html{font-size:15px;scroll-behavior:smooth;}
+    body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
 
-    /* =====================================================
-       LAYOUT
-       ===================================================== */
-    #app { display: flex; flex-direction: column; min-height: 100vh; }
+    /* Grid bg */
+    body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+      background-image:linear-gradient(rgba(77,158,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(77,158,255,.025) 1px,transparent 1px);
+      background-size:40px 40px;}
 
-    header {
-      border-bottom: 1px solid #21262d;
-      padding: 0 2rem;
-      display: flex;
-      align-items: center;
-      gap: 2rem;
-      height: 56px;
-      position: sticky;
-      top: 0;
-      background: #0a0e14;
-      z-index: 100;
-    }
+    /* Loader */
+    #loader{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem;transition:opacity .5s,visibility .5s;}
+    #loader.done{opacity:0;visibility:hidden;}
+    .loader-logo{font-family:var(--mono);font-size:1.4rem;font-weight:700;color:var(--blue);letter-spacing:-.02em;}
+    .loader-logo em{color:var(--green);font-style:normal;}
+    .loader-bar-wrap{width:200px;height:2px;background:var(--border);border-radius:2px;overflow:hidden;}
+    .loader-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--blue),var(--cyan));border-radius:2px;animation:loadbar 1.4s ease-out forwards;}
+    @keyframes loadbar{to{width:100%;}}
+    .loader-text{font-family:var(--mono);font-size:.72rem;color:var(--text3);letter-spacing:.08em;}
 
-    .logo {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: #58a6ff;
-      letter-spacing: -0.02em;
-      white-space: nowrap;
-    }
-    .logo span { color: #3fb950; }
+    #app{display:flex;flex-direction:column;min-height:100vh;position:relative;z-index:1;}
 
-    nav { display: flex; gap: 0; flex: 1; }
-    nav button {
-      background: none;
-      border: none;
-      border-bottom: 2px solid transparent;
-      color: #8b949e;
-      cursor: pointer;
-      font-family: inherit;
-      font-size: 0.85rem;
-      padding: 0 1rem;
-      height: 56px;
-      transition: color 0.15s, border-color 0.15s;
-    }
-    nav button:hover { color: #c9d1d9; }
-    nav button.active { color: #58a6ff; border-bottom-color: #58a6ff; }
+    /* Header */
+    header{height:58px;border-bottom:1px solid var(--border);padding:0 1.5rem;display:flex;align-items:center;gap:0;position:sticky;top:0;background:rgba(8,12,18,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);z-index:100;}
+    .logo{font-family:var(--mono);font-size:1rem;font-weight:700;color:var(--blue);letter-spacing:-.02em;white-space:nowrap;margin-right:2rem;text-decoration:none;}
+    .logo em{color:var(--green);font-style:normal;}
+    nav{display:flex;flex:1;height:100%;overflow-x:auto;}
+    nav::-webkit-scrollbar{display:none;}
+    nav button{background:none;border:none;border-bottom:2px solid transparent;color:var(--text3);cursor:pointer;font-family:var(--sans);font-size:.8rem;font-weight:500;padding:0 1rem;height:100%;white-space:nowrap;transition:color .2s,border-color .2s;letter-spacing:.02em;}
+    nav button:hover{color:var(--text2);}
+    nav button.active{color:var(--blue);border-bottom-color:var(--blue);}
+    .header-right{display:flex;align-items:center;gap:10px;margin-left:auto;}
+    .v-badge{font-family:var(--mono);font-size:.65rem;padding:3px 8px;border:1px solid var(--border2);border-radius:4px;color:var(--text3);}
+    .status-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 2.5s ease-in-out infinite;}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.8);}}
 
-    .header-badge {
-      font-size: 0.7rem;
-      padding: 2px 8px;
-      border: 1px solid #21262d;
-      border-radius: 2px;
-      color: #8b949e;
-    }
+    main{flex:1;padding:2rem 1.5rem;max-width:1280px;width:100%;margin:0 auto;}
 
-    main { flex: 1; padding: 2rem; max-width: 1200px; width: 100%; margin: 0 auto; }
+    /* Tabs */
+    .tab-panel{display:none;}
+    .tab-panel.active{display:block;animation:fadein .25s ease;}
+    @keyframes fadein{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
 
-    /* =====================================================
-       TAB PANELS
-       ===================================================== */
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
+    /* Typography */
+    h1{font-family:var(--mono);font-size:1.5rem;font-weight:700;color:var(--text);letter-spacing:-.03em;margin-bottom:.5rem;}
+    h1 .accent{color:var(--blue);}
+    h2{font-size:.8rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.875rem;}
+    h3{font-size:.95rem;font-weight:600;color:var(--text);margin-bottom:.5rem;}
+    p{font-size:.875rem;line-height:1.75;color:var(--text2);margin-bottom:.75rem;}
+    a{color:var(--blue);text-decoration:none;}
+    a:hover{text-decoration:underline;}
+    code{font-family:var(--mono);font-size:.82em;background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:1px 5px;color:var(--cyan);}
+    strong{color:var(--text);font-weight:600;}
 
-    /* =====================================================
-       COMMON COMPONENTS
-       ===================================================== */
-    h1 { font-size: 1.4rem; color: #e6edf3; margin-bottom: 0.5rem; }
-    h2 { font-size: 1.1rem; color: #e6edf3; margin-bottom: 0.75rem; }
-    h3 { font-size: 0.95rem; color: #c9d1d9; margin-bottom: 0.5rem; }
-    p  { font-size: 0.85rem; line-height: 1.7; color: #8b949e; margin-bottom: 0.75rem; }
-    a  { color: #58a6ff; text-decoration: none; }
-    a:hover { text-decoration: underline; }
+    .section{margin-bottom:2rem;}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+    .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;}
 
-    .section { margin-bottom: 2rem; }
+    /* Cards */
+    .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem 1.5rem;transition:border-color .2s,box-shadow .2s;}
+    .card:hover{border-color:var(--border2);box-shadow:0 0 24px rgba(77,158,255,.06);}
+    .card-header{display:flex;align-items:center;gap:8px;margin-bottom:1rem;padding-bottom:.75rem;border-bottom:1px solid var(--border);}
+    .card-icon{width:28px;height:28px;border-radius:6px;background:var(--blue-dim);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
 
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
-    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; }
+    /* Feat cards */
+    .feat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;transition:border-color .2s,transform .2s;}
+    .feat-card:hover{border-color:var(--border2);transform:translateY(-2px);}
+    .feat-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;margin-bottom:.875rem;}
+    .feat-icon.blue{background:var(--blue-dim);}
+    .feat-icon.green{background:var(--green-dim);}
+    .feat-icon.amber{background:var(--amber-dim);}
+    .feat-icon.purple{background:rgba(167,139,250,.1);}
 
-    .card {
-      background: #161b22;
-      border: 1px solid #21262d;
-      border-radius: 4px;
-      padding: 1.25rem;
-    }
+    /* Metrics */
+    .metric{background:var(--bg1);border:1px solid var(--border);border-radius:var(--radius);padding:.875rem 1rem;position:relative;overflow:hidden;transition:border-color .2s;}
+    .metric::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--blue),var(--cyan));opacity:0;transition:opacity .2s;}
+    .metric:hover::before{opacity:1;}
+    .metric-label{font-size:.68rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;}
+    .metric-value{font-family:var(--mono);font-size:1.35rem;font-weight:700;color:var(--text);line-height:1;}
+    .metric-unit{font-size:.7rem;color:var(--text3);margin-top:2px;}
 
-    .metric {
-      background: #0d1117;
-      border: 1px solid #21262d;
-      border-radius: 4px;
-      padding: 0.75rem 1rem;
-    }
-    .metric-label { font-size: 0.7rem; color: #8b949e; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
-    .metric-value { font-size: 1.3rem; color: #e6edf3; font-weight: 700; }
-    .metric-unit  { font-size: 0.7rem; color: #8b949e; }
+    /* Form */
+    label{font-size:.75rem;font-weight:500;color:var(--text2);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;}
+    select,input[type="text"],input[type="number"],textarea{width:100%;background:var(--bg1);border:1px solid var(--border2);border-radius:var(--radius);color:var(--text);font-family:var(--sans);font-size:.85rem;padding:8px 12px;outline:none;transition:border-color .2s,box-shadow .2s;appearance:none;-webkit-appearance:none;}
+    select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234d5f73' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:30px;}
+    select:focus,input:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(77,158,255,.1);}
+    textarea{resize:vertical;min-height:80px;line-height:1.6;}
 
-    label { font-size: 0.8rem; color: #8b949e; display: block; margin-bottom: 4px; }
+    /* Sliders */
+    .slider-row{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+    .slider-name{font-family:var(--mono);font-size:.72rem;color:var(--text2);width:120px;flex-shrink:0;}
+    input[type="range"]{flex:1;height:4px;cursor:pointer;-webkit-appearance:none;appearance:none;background:var(--border2);border-radius:2px;outline:none;}
+    input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--blue);border:2px solid var(--bg1);box-shadow:0 0 6px rgba(77,158,255,.5);cursor:pointer;transition:transform .15s;}
+    input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.2);}
+    .slider-val{font-family:var(--mono);font-size:.75rem;color:var(--blue);width:56px;text-align:right;font-weight:700;}
 
-    select, input[type="text"], input[type="number"], textarea {
-      width: 100%;
-      background: #0d1117;
-      border: 1px solid #21262d;
-      border-radius: 4px;
-      color: #c9d1d9;
-      font-family: inherit;
-      font-size: 0.85rem;
-      padding: 6px 10px;
-      outline: none;
-      transition: border-color 0.15s;
-    }
-    select:focus, input:focus, textarea:focus { border-color: #58a6ff; }
+    /* Buttons */
+    .btn{font-family:var(--sans);font-size:.82rem;font-weight:500;padding:8px 18px;border-radius:var(--radius);cursor:pointer;border:1px solid transparent;transition:all .15s;letter-spacing:.01em;}
+    .btn:active{transform:scale(.97);}
+    .btn:disabled{opacity:.35;cursor:not-allowed;}
+    .btn-primary{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 2px 12px rgba(77,158,255,.3);}
+    .btn-primary:hover:not(:disabled){background:#6aadff;box-shadow:0 4px 20px rgba(77,158,255,.45);}
+    .btn-ghost{background:transparent;border-color:var(--border2);color:var(--text2);}
+    .btn-ghost:hover:not(:disabled){border-color:var(--text3);color:var(--text);}
+    .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:1rem;}
 
-    .slider-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-    .slider-name { font-size: 0.8rem; color: #8b949e; width: 110px; flex-shrink: 0; }
-    input[type="range"] {
-      flex: 1;
-      accent-color: #58a6ff;
-      cursor: pointer;
-    }
-    .slider-val { font-size: 0.8rem; color: #58a6ff; width: 56px; text-align: right; font-weight: 700; }
+    /* Progress */
+    .progress-wrap{margin:10px 0 4px;}
+    .progress-track{height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+    .progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--blue),var(--cyan));border-radius:2px;transition:width .08s linear;}
+    .status-line{font-family:var(--mono);font-size:.7rem;color:var(--text3);margin-top:5px;min-height:16px;}
 
-    .btn {
-      font-family: inherit;
-      font-size: 0.85rem;
-      padding: 7px 18px;
-      border-radius: 4px;
-      cursor: pointer;
-      border: 1px solid transparent;
-      transition: opacity 0.15s, transform 0.1s;
-    }
-    .btn:active { transform: scale(0.97); }
-    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
-    .btn-primary { background: #238636; border-color: #2ea043; color: #fff; }
-    .btn-primary:hover:not(:disabled) { background: #2ea043; }
-    .btn-blue { background: #1f6feb; border-color: #388bfd; color: #fff; }
-    .btn-blue:hover:not(:disabled) { background: #388bfd; }
-    .btn-ghost { background: none; border-color: #21262d; color: #c9d1d9; }
-    .btn-ghost:hover:not(:disabled) { border-color: #8b949e; }
-    .btn-danger { background: #b91c1c; border-color: #dc2626; color: #fff; }
+    /* Canvas */
+    canvas{display:block;width:100%;}
+    .canvas-box{background:#030507;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;position:relative;}
+    .canvas-overlay{position:absolute;top:8px;left:10px;font-family:var(--mono);font-size:.68rem;color:var(--text3);pointer-events:none;}
+    .canvas-corner{position:absolute;bottom:8px;right:10px;font-family:var(--mono);font-size:.65rem;color:var(--text3);pointer-events:none;}
 
-    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 0.75rem; }
+    .colorbar-row{display:flex;align-items:stretch;gap:8px;margin-top:10px;}
+    .colorbar{width:10px;border-radius:3px;flex-shrink:0;background:linear-gradient(to top,#000004 0%,#1b0642 15%,#3b0f70 28%,#6b1e8a 40%,#8c2981 50%,#c33d6e 62%,#de4968 70%,#fe9f6d 85%,#fcfdbf 100%);}
+    .colorbar-ticks{display:flex;flex-direction:column;justify-content:space-between;font-family:var(--mono);font-size:.62rem;color:var(--text3);}
 
-    .progress-wrap { margin: 8px 0; }
-    .progress-bar { height: 3px; background: #21262d; border-radius: 2px; overflow: hidden; }
-    .progress-fill { height: 100%; background: #58a6ff; border-radius: 2px; transition: width 0.08s linear; width: 0%; }
-    .status-line { font-size: 0.75rem; color: #8b949e; margin-top: 4px; height: 16px; }
+    /* Tags */
+    .tag{display:inline-block;font-family:var(--mono);font-size:.68rem;padding:3px 8px;border:1px solid var(--border);border-radius:5px;color:var(--text3);margin:2px;}
+    .tag.blue{border-color:rgba(77,158,255,.4);color:var(--blue);background:var(--blue-dim);}
+    .tag.green{border-color:rgba(61,227,131,.4);color:var(--green);background:var(--green-dim);}
+    .tag.amber{border-color:rgba(240,165,74,.4);color:var(--amber);background:var(--amber-dim);}
+    .tag.red{border-color:rgba(240,91,91,.4);color:var(--red);background:rgba(240,91,91,.08);}
+    .tag.purple{border-color:rgba(167,139,250,.4);color:var(--purple);background:rgba(167,139,250,.08);}
 
-    canvas { display: block; width: 100%; }
-    .canvas-box {
-      background: #0d1117;
-      border: 1px solid #21262d;
-      border-radius: 4px;
-      overflow: hidden;
-      position: relative;
-    }
-    .canvas-overlay {
-      position: absolute; top: 6px; left: 8px;
-      font-size: 0.7rem; color: #8b949e;
-      font-family: 'IBM Plex Mono', monospace;
-    }
+    /* Table */
+    .table-wrap{overflow-x:auto;}
+    table{width:100%;border-collapse:collapse;font-size:.82rem;}
+    th{text-align:left;font-size:.68rem;font-weight:600;color:var(--text3);padding:8px 12px;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.07em;}
+    td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(--text2);}
+    tr:last-child td{border-bottom:none;}
+    tr:hover td{background:rgba(77,158,255,.03);color:var(--text);}
 
-    .colorbar-row { display: flex; align-items: stretch; gap: 6px; margin-top: 8px; }
-    .colorbar {
-      width: 12px; border-radius: 2px;
-      background: linear-gradient(to top, #000004, #3b0f70, #8c2981, #de4968, #fe9f6d, #fcfdbf);
-      flex-shrink: 0;
-    }
-    .colorbar-ticks { display: flex; flex-direction: column; justify-content: space-between; font-size: 0.65rem; color: #8b949e; }
+    .divider{border:none;border-top:1px solid var(--border);margin:1.5rem 0;}
 
-    .tag {
-      display: inline-block;
-      font-size: 0.72rem;
-      padding: 2px 8px;
-      border: 1px solid #21262d;
-      border-radius: 3px;
-      color: #8b949e;
-      margin: 2px;
-      font-family: 'IBM Plex Mono', monospace;
-    }
-    .tag.green { border-color: #3fb950; color: #3fb950; }
-    .tag.blue  { border-color: #58a6ff; color: #58a6ff; }
-    .tag.amber { border-color: #d29922; color: #d29922; }
-    .tag.red   { border-color: #f85149; color: #f85149; }
+    /* AI */
+    .ai-box{background:var(--bg1);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.25rem;}
+    .ai-response{font-size:.85rem;color:var(--text2);line-height:1.75;min-height:56px;}
+    .ai-response.thinking{color:var(--blue);font-style:italic;animation:blink 1.4s ease-in-out infinite;}
+    @keyframes blink{0%,100%{opacity:1;}50%{opacity:.5;}}
+    .ai-response.error{color:var(--red);}
 
-    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-    th { text-align: left; font-size: 0.72rem; color: #8b949e; padding: 6px 10px; border-bottom: 1px solid #21262d; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500; }
-    td { padding: 8px 10px; border-bottom: 1px solid #161b22; color: #c9d1d9; }
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background: #161b22; }
+    .formula-box{background:var(--bg1);border:1px solid var(--border);border-left:3px solid var(--blue);border-radius:0 var(--radius) var(--radius) 0;padding:.875rem 1.25rem;font-family:var(--mono);font-size:.9rem;color:var(--cyan);margin:1rem 0;letter-spacing:.02em;}
 
-    .divider { border: none; border-top: 1px solid #21262d; margin: 1.5rem 0; }
+    /* Hero */
+    .hero{padding:2.5rem 0 1.5rem;margin-bottom:.5rem;}
+    .hero-title{font-family:var(--mono);font-size:2rem;font-weight:700;color:var(--text);letter-spacing:-.04em;line-height:1.1;margin-bottom:1rem;}
+    .hero-title .pde{color:var(--blue);}
+    .hero-title .onco{color:var(--green);}
+    .hero-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:1.25rem;}
+    .hero-chip{font-family:var(--mono);font-size:.7rem;padding:4px 12px;border:1px solid var(--border2);border-radius:20px;color:var(--text3);letter-spacing:.04em;}
 
-    .ai-box { background: #0d1117; border: 1px solid #21262d; border-radius: 4px; padding: 1rem; }
-    .ai-response { font-size: 0.83rem; color: #8b949e; line-height: 1.7; min-height: 60px; }
-    .ai-response.thinking { color: #58a6ff; font-style: italic; }
-    .ai-response.error { color: #f85149; }
+    /* Footer */
+    footer{border-top:1px solid var(--border);padding:1rem 1.5rem;font-size:.72rem;color:var(--text3);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+    .footer-logo{font-family:var(--mono);color:var(--text2);}
 
-    .formula-box {
-      background: #0d1117;
-      border: 1px solid #21262d;
-      border-left: 3px solid #58a6ff;
-      border-radius: 0 4px 4px 0;
-      padding: 0.75rem 1rem;
-      font-size: 0.85rem;
-      color: #3fb950;
-      margin: 0.75rem 0;
-    }
-
-    .difficulty-bar { display: flex; gap: 3px; align-items: center; }
-    .difficulty-dot { width: 10px; height: 10px; border-radius: 50%; background: #21262d; }
-    .difficulty-dot.filled { background: #58a6ff; }
-    .difficulty-dot.filled.high { background: #d29922; }
-    .difficulty-dot.filled.vhigh { background: #f85149; }
-
-    footer {
-      border-top: 1px solid #21262d;
-      padding: 1rem 2rem;
-      font-size: 0.75rem;
-      color: #8b949e;
-      text-align: center;
-    }
+    /* Mobile */
+    @media(max-width:900px){.grid-2{grid-template-columns:1fr;}}
+    @media(max-width:600px){.grid-4{grid-template-columns:1fr 1fr;}main{padding:1rem;}header{padding:0 1rem;}.hero-title{font-size:1.4rem;}}
   </style>
 </head>
 <body>
-<div id="app">
 
-  <!-- ===== HEADER ===== -->
+<div id="loader">
+  <div class="loader-logo">PDE<em>Oncology</em></div>
+  <div class="loader-bar-wrap"><div class="loader-bar"></div></div>
+  <div class="loader-text">INITIALISING SIMULATION ENGINE</div>
+</div>
+
+<div id="app">
   <header>
-    <div class="logo">PDE<span>Oncology</span></div>
+    <a class="logo" href="#" onclick="switchTab('about');return false;">PDE<em>Oncology</em></a>
     <nav id="nav">
       <button class="active" onclick="switchTab('about')">About</button>
       <button onclick="switchTab('simulation')">Simulation</button>
@@ -249,89 +214,68 @@
       <button onclick="switchTab('results')">Results</button>
       <button onclick="switchTab('database')">Drug Database</button>
     </nav>
-    <span class="header-badge">v0.2-beta</span>
+    <div class="header-right">
+      <div class="status-dot"></div>
+      <span class="v-badge">v0.3</span>
+    </div>
   </header>
 
   <main>
 
-    <!-- ================================================
-         TAB: ABOUT
-         ================================================ -->
+    <!-- ABOUT -->
     <div id="tab-about" class="tab-panel active">
-      <div class="section">
-        <h1>PDEOncology</h1>
-        <p>A browser-based simulator for tumor drug penetration using reaction-diffusion partial differential equations (PDEs). No installation required — all computation runs client-side in JavaScript.</p>
+      <div class="hero section">
+        <div class="hero-title"><span class="pde">PDE</span><span class="onco">Oncology</span></div>
+        <p style="max-width:640px;">Browser-based simulator for tumor drug penetration using reaction-diffusion partial differential equations. All computation runs client-side — no server, no install.</p>
         <div class="formula-box">∂C/∂t = ∇·(D(x,y)∇C) − λC − k·ρ(x,y)·C</div>
-        <p>Where <strong>C</strong> is drug concentration, <strong>D</strong> is the spatially-varying diffusion coefficient, <strong>λ</strong> is the degradation rate, <strong>k</strong> is the cellular uptake rate, and <strong>ρ(x,y)</strong> is the local cell density field.</p>
+        <div class="hero-chips">
+          <span class="hero-chip">FDM · FTCS scheme</span>
+          <span class="hero-chip">80 × 80 grid</span>
+          <span class="hero-chip">Claude API</span>
+          <span class="hero-chip">client-side JS</span>
+          <span class="hero-chip">open source</span>
+        </div>
       </div>
-
-      <hr class="divider" />
-
+      <hr class="divider"/>
       <div class="grid-2 section">
-        <div class="card">
-          <h3>Numerical method</h3>
-          <p>Explicit finite difference (FTCS scheme) on a 2D uniform grid. Stability enforced via CFL condition: <code>dt ≤ dx² / (4D)</code>.</p>
-          <p>Grid size: 80×80 nodes representing a 1cm × 1cm tissue cross-section.</p>
-        </div>
-        <div class="card">
-          <h3>AI integration</h3>
-          <p>Uses the Claude API to extract biophysically grounded PDE parameters from a natural-language drug + tumor description. Parameters are auto-loaded into the simulator.</p>
-          <p>Requires a valid Anthropic API key (set in AI Drug Input tab).</p>
-        </div>
-        <div class="card">
-          <h3>Tumor model</h3>
-          <p>Circular tumor geometry with a radially-graded cell density field. Diffusion coefficient is attenuated in the tumor core to simulate interstitial fluid pressure (IFP) and extracellular matrix barriers.</p>
-        </div>
-        <div class="card">
-          <h3>How to use</h3>
-          <p>1. Go to <strong>Simulation</strong> — pick a drug + tumor preset or set sliders manually.<br>
-             2. Or go to <strong>AI Drug Input</strong> — type a description and let Claude set parameters.<br>
-             3. Click <strong>Run Simulation</strong>.<br>
-             4. View and export results in <strong>Results</strong>.</p>
-        </div>
+        <div class="feat-card"><div class="feat-icon blue">⬡</div><h3>Numerical method</h3><p>Explicit finite difference (FTCS) on a 2D uniform grid. Stability via CFL: <code>dt ≤ dx²/(4D)</code>. Grid represents a 1 cm × 1 cm tissue section.</p></div>
+        <div class="feat-card"><div class="feat-icon green">◈</div><h3>AI integration</h3><p>Uses Claude API to extract biophysically grounded PDE parameters from natural-language descriptions. Falls back to local database when offline.</p></div>
+        <div class="feat-card"><div class="feat-icon amber">◉</div><h3>Tumor model</h3><p>Radially-graded cell density field ρ(x,y). Diffusion coefficient D attenuated in tumor core to simulate IFP and extracellular matrix barriers.</p></div>
+        <div class="feat-card"><div class="feat-icon purple">▷</div><h3>How to use</h3><p>Go to <strong>Simulation</strong> and pick a preset, or use <strong>AI Drug Input</strong> to describe a drug + tumor. Run, then view analytics in <strong>Results</strong>.</p></div>
       </div>
-
-      <hr class="divider" />
-
-      <div class="section">
-        <h2>PDE parameters explained</h2>
+      <hr class="divider"/>
+      <h2>PDE parameters</h2>
+      <div class="card table-wrap">
         <table>
-          <thead><tr><th>Parameter</th><th>Symbol</th><th>Meaning</th><th>Typical range</th></tr></thead>
+          <thead><tr><th>Parameter</th><th>Symbol</th><th>Meaning</th><th>Range</th></tr></thead>
           <tbody>
-            <tr><td>Diffusion coefficient</td><td>D</td><td>How fast the drug spreads through tissue</td><td>0.005 – 0.25 (normalised)</td></tr>
-            <tr><td>Degradation rate</td><td>λ</td><td>Drug breakdown / metabolic clearance</td><td>0.001 – 0.05</td></tr>
-            <tr><td>Uptake rate</td><td>k</td><td>Rate at which cancer cells absorb the drug</td><td>0.01 – 0.15</td></tr>
-            <tr><td>Cell density</td><td>ρ(x,y)</td><td>Spatial distribution of tumor cells</td><td>0.05 – 1.0</td></tr>
-            <tr><td>Tumor radius</td><td>r</td><td>Radius of the tumor region in grid units</td><td>10 – 38 px</td></tr>
+            <tr><td>Diffusion coefficient</td><td><code>D</code></td><td>Drug spread through tissue</td><td>0.005–0.25</td></tr>
+            <tr><td>Degradation rate</td><td><code>λ</code></td><td>Metabolic clearance</td><td>0.001–0.05</td></tr>
+            <tr><td>Uptake rate</td><td><code>k</code></td><td>Cellular drug absorption</td><td>0.01–0.15</td></tr>
+            <tr><td>Cell density</td><td><code>ρ(x,y)</code></td><td>Spatial tumor cell distribution</td><td>0.05–1.0</td></tr>
+            <tr><td>Tumor radius</td><td><code>r</code></td><td>Radius in grid units</td><td>10–38 px</td></tr>
           </tbody>
         </table>
       </div>
     </div>
 
-    <!-- ================================================
-         TAB: SIMULATION
-         ================================================ -->
+    <!-- SIMULATION -->
     <div id="tab-simulation" class="tab-panel">
       <div class="grid-2 section">
-
-        <!-- Left: controls -->
         <div class="card">
-          <h2>Parameters</h2>
-
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1rem;">
-            <div>
-              <label>Drug</label>
+          <div class="card-header"><div class="card-icon">⚙</div><h2 style="margin:0;">Parameters</h2></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;">
+            <div><label>Drug</label>
               <select id="drug-select" onchange="loadPreset()">
                 <option value="doxorubicin">Doxorubicin</option>
                 <option value="paclitaxel">Paclitaxel</option>
                 <option value="cisplatin">Cisplatin</option>
                 <option value="gemcitabine">Gemcitabine</option>
                 <option value="trastuzumab">Trastuzumab (ADC)</option>
-                <option value="custom">Custom (from AI)</option>
+                <option value="custom">Custom (AI)</option>
               </select>
             </div>
-            <div>
-              <label>Tumor type</label>
+            <div><label>Tumor type</label>
               <select id="tumor-select" onchange="loadPreset()">
                 <option value="breast">Breast cancer</option>
                 <option value="pancreatic">Pancreatic cancer</option>
@@ -341,878 +285,349 @@
               </select>
             </div>
           </div>
-
-          <div>
-            <label>Delivery mode</label>
+          <div style="margin-bottom:1rem;"><label>Delivery mode</label>
             <select id="mode-select">
               <option value="left_boundary">IV Infusion (left boundary)</option>
               <option value="ring">Vascular ring</option>
               <option value="point">Intratumoral injection</option>
             </select>
           </div>
-
-          <hr class="divider" style="margin:1rem 0;" />
-
-          <div class="slider-row">
-            <span class="slider-name">D (diffusion)</span>
-            <input type="range" id="sl-D" min="1" max="30" step="1" value="8" oninput="sy('D',this.value)">
-            <span class="slider-val" id="vD">0.08</span>
-          </div>
-          <div class="slider-row">
-            <span class="slider-name">λ (degradation)</span>
-            <input type="range" id="sl-lam" min="1" max="50" step="1" value="5" oninput="sy('lam',this.value)">
-            <span class="slider-val" id="vlam">0.005</span>
-          </div>
-          <div class="slider-row">
-            <span class="slider-name">k (uptake)</span>
-            <input type="range" id="sl-k" min="1" max="20" step="1" value="6" oninput="sy('k',this.value)">
-            <span class="slider-val" id="vk">0.06</span>
-          </div>
-          <div class="slider-row">
-            <span class="slider-name">Tumor radius</span>
-            <input type="range" id="sl-r" min="10" max="38" step="1" value="22" oninput="sy('r',this.value)">
-            <span class="slider-val" id="vr">22 px</span>
-          </div>
-          <div class="slider-row">
-            <span class="slider-name">Steps</span>
-            <input type="range" id="sl-steps" min="100" max="800" step="50" value="400" oninput="sy('steps',this.value)">
-            <span class="slider-val" id="vsteps">400</span>
-          </div>
-
+          <hr class="divider" style="margin:.875rem 0;"/>
+          <div class="slider-row"><span class="slider-name">D · diffusion</span><input type="range" id="sl-D" min="1" max="30" step="1" value="8" oninput="sy('D',this.value)"><span class="slider-val" id="vD">0.08</span></div>
+          <div class="slider-row"><span class="slider-name">λ · decay</span><input type="range" id="sl-lam" min="1" max="50" step="1" value="5" oninput="sy('lam',this.value)"><span class="slider-val" id="vlam">0.005</span></div>
+          <div class="slider-row"><span class="slider-name">k · uptake</span><input type="range" id="sl-k" min="1" max="20" step="1" value="6" oninput="sy('k',this.value)"><span class="slider-val" id="vk">0.06</span></div>
+          <div class="slider-row"><span class="slider-name">r · radius</span><input type="range" id="sl-r" min="10" max="38" step="1" value="22" oninput="sy('r',this.value)"><span class="slider-val" id="vr">22 px</span></div>
+          <div class="slider-row"><span class="slider-name">n · steps</span><input type="range" id="sl-steps" min="100" max="800" step="50" value="400" oninput="sy('steps',this.value)"><span class="slider-val" id="vsteps">400</span></div>
           <div class="btn-row">
-            <button class="btn btn-primary" id="run-btn" onclick="runSim()">Run simulation</button>
+            <button class="btn btn-primary" id="run-btn" onclick="runSim()">▶ Run simulation</button>
             <button class="btn btn-ghost" onclick="resetSim()">Reset</button>
-            <button class="btn btn-ghost" onclick="switchTab('results')" id="export-btn" disabled>View results</button>
+            <button class="btn btn-ghost" onclick="switchTab('results')" id="export-btn" disabled>View results →</button>
           </div>
           <div class="progress-wrap">
-            <div class="progress-bar"><div class="progress-fill" id="prog"></div></div>
+            <div class="progress-track"><div class="progress-fill" id="prog"></div></div>
             <div class="status-line" id="status"></div>
           </div>
         </div>
-
-        <!-- Right: heatmap -->
         <div>
-          <div class="canvas-box" style="height:300px;">
-            <canvas id="heatmap" width="320" height="300"></canvas>
+          <div class="canvas-box" style="aspect-ratio:1;">
+            <canvas id="heatmap" width="400" height="400"></canvas>
             <div class="canvas-overlay" id="heat-lbl">ready — press Run</div>
+            <div class="canvas-corner" id="heat-corner"></div>
           </div>
-          <div class="colorbar-row" style="height:40px;">
-            <div class="colorbar" style="height:40px;"></div>
-            <div class="colorbar-ticks">
-              <span>1.0</span><span>0.5</span><span>0.0</span>
-            </div>
-            <div style="flex:1;"></div>
+          <div class="colorbar-row" style="height:36px;margin-top:10px;">
+            <div class="colorbar" style="height:36px;"></div>
+            <div class="colorbar-ticks"><span>1.0</span><span>0.5</span><span>0.0</span></div>
           </div>
-          <div class="grid-4" style="margin-top:8px;">
+          <div class="grid-4" style="margin-top:10px;">
             <div class="metric"><div class="metric-label">Tumor avg C</div><div class="metric-value" id="m-tavg">—</div></div>
             <div class="metric"><div class="metric-label">Max C</div><div class="metric-value" id="m-max">—</div></div>
-            <div class="metric"><div class="metric-label">50% depth</div><div class="metric-value" id="m-depth">—</div><span class="metric-unit">px</span></div>
-            <div class="metric"><div class="metric-label">Coverage</div><div class="metric-value" id="m-cov">—</div><span class="metric-unit">%</span></div>
+            <div class="metric"><div class="metric-label">50% depth</div><div class="metric-value" id="m-depth">—</div><div class="metric-unit">px</div></div>
+            <div class="metric"><div class="metric-label">Coverage</div><div class="metric-value" id="m-cov">—</div><div class="metric-unit">%</div></div>
           </div>
         </div>
       </div>
-
-      <!-- Penetration curve -->
       <div class="card section">
-        <h2>Radial penetration curve</h2>
-        <div class="canvas-box">
-          <canvas id="curve-canvas" width="900" height="180"></canvas>
-        </div>
+        <div class="card-header"><div class="card-icon">📈</div><h2 style="margin:0;">Radial penetration curve</h2></div>
+        <div class="canvas-box"><canvas id="curve-canvas" width="1000" height="200"></canvas></div>
       </div>
     </div>
 
-    <!-- ================================================
-         TAB: AI DRUG INPUT
-         ================================================ -->
+    <!-- AI -->
     <div id="tab-ai" class="tab-panel">
-      <div class="section">
-        <h1>AI Drug Input</h1>
-        <p>Describe a drug and tumor type in plain English. Claude will extract biophysically grounded PDE parameters and load them directly into the simulator.</p>
-      </div>
-
+      <div class="section"><h1>AI Drug <span class="accent">Input</span></h1><p>Describe a drug and tumor in plain English. Claude extracts biophysically grounded PDE parameters and loads them into the simulator.</p></div>
       <div class="card section">
-        <h2>API key</h2>
-        <p>Your key is stored only in this browser session — never sent anywhere except directly to <code>api.anthropic.com</code>.</p>
-        <div style="display:flex;gap:8px;max-width:540px;">
-          <input type="text" id="api-key-input" placeholder="sk-ant-api03-..." />
-          <button class="btn btn-blue" onclick="saveKey()">Save</button>
+        <div class="card-header"><div class="card-icon blue">🔑</div><h2 style="margin:0;">API key</h2></div>
+        <p style="margin-bottom:.75rem;">Session-only — sent directly to <code>api.anthropic.com</code> via CORS proxy. Never logged.</p>
+        <div style="display:flex;gap:8px;max-width:520px;">
+          <input type="text" id="api-key-input" placeholder="sk-ant-api03-…"/>
+          <button class="btn btn-primary" onclick="saveKey()">Save</button>
         </div>
         <div id="key-status" class="status-line" style="margin-top:6px;"></div>
       </div>
-
       <div class="card section">
-        <h2>Describe your simulation</h2>
+        <div class="card-header"><div class="card-icon green">◈</div><h2 style="margin:0;">Describe your simulation</h2></div>
         <label>Drug + tumor description</label>
-        <textarea id="ai-input" rows="3" placeholder="e.g. Simulate gemcitabine in pancreatic ductal adenocarcinoma. High stromal density, poor vascularisation."></textarea>
+        <textarea id="ai-input" rows="3" placeholder="e.g. Simulate gemcitabine in pancreatic ductal adenocarcinoma with high stromal density and poor vascularisation."></textarea>
         <div class="btn-row">
           <button class="btn btn-primary" id="ai-btn" onclick="askAI()">Ask Claude ↗</button>
           <button class="btn btn-ghost" onclick="document.getElementById('ai-input').value=''">Clear</button>
         </div>
       </div>
-
       <div class="ai-box section">
-        <div style="font-size:0.72rem;color:#8b949e;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">Claude response</div>
+        <div style="font-size:.68rem;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.08em;font-family:var(--mono);">Claude response</div>
         <div class="ai-response" id="ai-response">Enter a description above and click Ask Claude.</div>
         <div id="ai-tags" style="margin-top:10px;"></div>
       </div>
-
       <div class="card section" id="ai-preview" style="display:none;">
-        <h2>Extracted parameters</h2>
-        <table id="ai-param-table">
-          <thead><tr><th>Parameter</th><th>Value</th><th>Notes</th></tr></thead>
-          <tbody id="ai-param-body"></tbody>
-        </table>
-        <div class="btn-row">
-          <button class="btn btn-primary" onclick="applyAIParams()">Apply &amp; go to Simulation ↗</button>
-        </div>
+        <div class="card-header"><div class="card-icon amber">▦</div><h2 style="margin:0;">Extracted parameters</h2></div>
+        <div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Value</th><th>Notes</th></tr></thead><tbody id="ai-param-body"></tbody></table></div>
+        <div class="btn-row"><button class="btn btn-primary" onclick="applyAIParams()">Apply &amp; go to Simulation →</button></div>
       </div>
     </div>
 
-    <!-- ================================================
-         TAB: RESULTS
-         ================================================ -->
+    <!-- RESULTS -->
     <div id="tab-results" class="tab-panel">
-      <div class="section">
-        <h1>Results &amp; Report</h1>
-        <p>Run a simulation first, then return here to view analytics and export data.</p>
+      <div class="section"><h1>Results <span class="accent">&amp; Report</span></h1><p>Run a simulation first, then return here for analytics and export.</p></div>
+      <div id="results-empty" class="card section" style="text-align:center;padding:3rem 1rem;">
+        <p style="color:var(--text3);">No simulation data yet.</p>
+        <button class="btn btn-ghost" onclick="switchTab('simulation')" style="margin-top:.75rem;">Go to Simulation →</button>
       </div>
-
-      <div id="results-empty" class="card section">
-        <p style="text-align:center;padding:2rem 0;color:#8b949e;">No simulation data yet. <a href="#" onclick="switchTab('simulation')">Go to Simulation →</a></p>
-      </div>
-
       <div id="results-content" style="display:none;">
         <div class="grid-4 section">
-          <div class="metric"><div class="metric-label">Drug</div><div class="metric-value" id="r-drug" style="font-size:1rem;">—</div></div>
-          <div class="metric"><div class="metric-label">Tumor</div><div class="metric-value" id="r-tumor" style="font-size:1rem;">—</div></div>
+          <div class="metric"><div class="metric-label">Drug</div><div class="metric-value" id="r-drug" style="font-size:.9rem;word-break:break-all;">—</div></div>
+          <div class="metric"><div class="metric-label">Tumor</div><div class="metric-value" id="r-tumor" style="font-size:.9rem;">—</div></div>
           <div class="metric"><div class="metric-label">Tumor avg C</div><div class="metric-value" id="r-tavg">—</div></div>
-          <div class="metric"><div class="metric-label">50% depth</div><div class="metric-value" id="r-depth">—</div><span class="metric-unit">px</span></div>
+          <div class="metric"><div class="metric-label">50% depth</div><div class="metric-value" id="r-depth">—</div><div class="metric-unit">px</div></div>
         </div>
-
         <div class="grid-2 section">
-          <div class="card">
-            <h2>Concentration heatmap</h2>
-            <div class="canvas-box">
-              <canvas id="result-heatmap" width="400" height="360"></canvas>
-            </div>
-          </div>
-          <div class="card">
-            <h2>Radial penetration curve</h2>
-            <div class="canvas-box">
-              <canvas id="result-curve" width="400" height="360"></canvas>
-            </div>
-          </div>
+          <div class="card"><div class="card-header"><div class="card-icon">🌡</div><h2 style="margin:0;">Concentration heatmap</h2></div><div class="canvas-box"><canvas id="result-heatmap" width="500" height="460"></canvas></div></div>
+          <div class="card"><div class="card-header"><div class="card-icon">📈</div><h2 style="margin:0;">Radial penetration curve</h2></div><div class="canvas-box"><canvas id="result-curve" width="500" height="460"></canvas></div></div>
         </div>
-
-        <div class="card section">
-          <h2>Simulation parameters</h2>
-          <table id="result-param-table">
-            <thead><tr><th>Parameter</th><th>Symbol</th><th>Value</th></tr></thead>
-            <tbody id="result-param-body"></tbody>
-          </table>
-        </div>
-
-        <div class="card section">
-          <h2>Auto-generated report summary</h2>
-          <div id="report-text" style="font-size:0.85rem;line-height:1.8;color:#c9d1d9;"></div>
-        </div>
-
+        <div class="card section"><div class="card-header"><div class="card-icon">⚙</div><h2 style="margin:0;">Simulation parameters</h2></div><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Symbol</th><th>Value</th></tr></thead><tbody id="result-param-body"></tbody></table></div></div>
+        <div class="card section"><div class="card-header"><div class="card-icon green">✦</div><h2 style="margin:0;">Report summary</h2></div><div id="report-text" style="font-size:.875rem;line-height:1.85;color:var(--text2);"></div></div>
         <div class="btn-row section">
-          <button class="btn btn-blue" onclick="exportCSV()">Export CSV</button>
+          <button class="btn btn-primary" onclick="exportCSV()">Export CSV</button>
           <button class="btn btn-ghost" onclick="exportPNG()">Save heatmap PNG</button>
           <button class="btn btn-ghost" onclick="printReport()">Print report</button>
         </div>
       </div>
     </div>
 
-    <!-- ================================================
-         TAB: DRUG DATABASE
-         ================================================ -->
+    <!-- DATABASE -->
     <div id="tab-database" class="tab-panel">
-      <div class="section">
-        <h1>Drug Database</h1>
-        <p>Built-in parameter library for common oncology drugs across tumor types. All values are normalised for the PDE model. Click a row to load into the simulator.</p>
-      </div>
-
+      <div class="section"><h1>Drug <span class="accent">Database</span></h1><p>Built-in parameter library. Click any row to load into the simulator.</p></div>
       <div class="card section">
         <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;">
-          <input type="text" id="db-search" placeholder="Search drug or tumor..." style="max-width:280px;" oninput="filterDB()">
-          <select id="db-filter-tumor" onchange="filterDB()" style="max-width:180px;">
-            <option value="">All tumor types</option>
-            <option value="breast">Breast</option>
-            <option value="pancreatic">Pancreatic</option>
-            <option value="glioma">Glioma</option>
-            <option value="melanoma">Melanoma</option>
-            <option value="colorectal">Colorectal</option>
-          </select>
-          <select id="db-filter-diff" onchange="filterDB()" style="max-width:180px;">
-            <option value="">All difficulty</option>
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-            <option value="very high">Very high</option>
-          </select>
+          <input type="text" id="db-search" placeholder="Search drug, tumor, class…" style="max-width:260px;" oninput="filterDB()">
+          <select id="db-filter-tumor" onchange="filterDB()" style="max-width:180px;"><option value="">All tumors</option><option value="breast">Breast</option><option value="pancreatic">Pancreatic</option><option value="glioma">Glioma</option><option value="melanoma">Melanoma</option><option value="colorectal">Colorectal</option></select>
+          <select id="db-filter-diff" onchange="filterDB()" style="max-width:180px;"><option value="">All difficulty</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="very high">Very high</option></select>
         </div>
-
-        <table>
-          <thead>
-            <tr>
-              <th>Drug</th>
-              <th>Tumor</th>
-              <th>D</th>
-              <th>λ</th>
-              <th>k</th>
-              <th>Radius</th>
-              <th>Difficulty</th>
-              <th>Class</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="db-tbody"></tbody>
-        </table>
+        <div class="table-wrap"><table><thead><tr><th>Drug</th><th>Tumor</th><th>D</th><th>λ</th><th>k</th><th>r</th><th>Difficulty</th><th>Class</th><th></th></tr></thead><tbody id="db-tbody"></tbody></table></div>
       </div>
-
-      <div class="card section">
-        <h2>About these parameters</h2>
-        <p>Diffusion coefficients are scaled relative to free diffusion in water (~10⁻⁵ cm²/s). Uptake rates reflect receptor expression levels. Degradation rates account for metabolic clearance. Values are indicative — for research use only.</p>
-        <p>Sources: Jain RK (1987), Nugent &amp; Jain (1984), Thurber et al. (2008), Chauhan et al. (2011).</p>
-      </div>
+      <div class="card section"><h3>About these parameters</h3><p>D scaled relative to free diffusion in water. Uptake rates reflect receptor expression. Degradation accounts for metabolic clearance.</p><p style="margin:0;color:var(--text3);font-size:.8rem;">Sources: Jain RK (1987), Nugent &amp; Jain (1984), Thurber et al. (2008), Chauhan et al. (2011).</p></div>
     </div>
 
   </main>
 
   <footer>
-    PDEOncology &mdash; Tumor Drug Penetration Simulator &mdash; For research and educational use only &mdash;
-    <a href="https://github.com/" target="_blank">GitHub</a>
+    <span class="footer-logo">PDEOncology</span>
+    <span>Tumor Drug Penetration Simulator — research &amp; educational use only</span>
+    <a href="https://github.com/SYM19/tumor-drug-penetration-model" target="_blank">GitHub ↗</a>
   </footer>
 </div>
 
 <script>
-/* =========================================================
-   DATA
-   ========================================================= */
-const DB = [
-  { drug:'Doxorubicin',  tumor:'breast',     D:0.08,  lam:0.005, k:0.06,  r:22, diff:'medium',   cls:'Anthracycline' },
-  { drug:'Doxorubicin',  tumor:'pancreatic', D:0.02,  lam:0.008, k:0.04,  r:28, diff:'very high', cls:'Anthracycline' },
-  { drug:'Doxorubicin',  tumor:'glioma',     D:0.10,  lam:0.003, k:0.05,  r:20, diff:'medium',   cls:'Anthracycline' },
-  { drug:'Doxorubicin',  tumor:'melanoma',   D:0.05,  lam:0.007, k:0.07,  r:24, diff:'high',     cls:'Anthracycline' },
-  { drug:'Paclitaxel',   tumor:'breast',     D:0.06,  lam:0.004, k:0.05,  r:22, diff:'medium',   cls:'Taxane' },
-  { drug:'Paclitaxel',   tumor:'pancreatic', D:0.015, lam:0.006, k:0.03,  r:28, diff:'very high', cls:'Taxane' },
-  { drug:'Paclitaxel',   tumor:'glioma',     D:0.08,  lam:0.003, k:0.045, r:20, diff:'medium',   cls:'Taxane' },
-  { drug:'Paclitaxel',   tumor:'melanoma',   D:0.04,  lam:0.006, k:0.06,  r:24, diff:'high',     cls:'Taxane' },
-  { drug:'Cisplatin',    tumor:'breast',     D:0.12,  lam:0.003, k:0.08,  r:22, diff:'low',      cls:'Platinum' },
-  { drug:'Cisplatin',    tumor:'pancreatic', D:0.03,  lam:0.005, k:0.05,  r:28, diff:'high',     cls:'Platinum' },
-  { drug:'Cisplatin',    tumor:'glioma',     D:0.15,  lam:0.002, k:0.07,  r:20, diff:'low',      cls:'Platinum' },
-  { drug:'Cisplatin',    tumor:'colorectal', D:0.09,  lam:0.004, k:0.07,  r:24, diff:'medium',   cls:'Platinum' },
-  { drug:'Gemcitabine',  tumor:'pancreatic', D:0.025, lam:0.009, k:0.035, r:28, diff:'very high', cls:'Antimetabolite' },
-  { drug:'Gemcitabine',  tumor:'breast',     D:0.07,  lam:0.005, k:0.055, r:22, diff:'medium',   cls:'Antimetabolite' },
-  { drug:'Gemcitabine',  tumor:'colorectal', D:0.06,  lam:0.006, k:0.05,  r:24, diff:'medium',   cls:'Antimetabolite' },
-  { drug:'Trastuzumab',  tumor:'breast',     D:0.01,  lam:0.001, k:0.12,  r:22, diff:'medium',   cls:'Monoclonal Ab' },
-  { drug:'Trastuzumab',  tumor:'pancreatic', D:0.005, lam:0.002, k:0.08,  r:28, diff:'very high', cls:'Monoclonal Ab' },
-  { drug:'5-Fluorouracil',tumor:'colorectal',D:0.11,  lam:0.004, k:0.075, r:24, diff:'low',      cls:'Antimetabolite' },
-  { drug:'5-Fluorouracil',tumor:'breast',    D:0.10,  lam:0.004, k:0.07,  r:22, diff:'low',      cls:'Antimetabolite' },
-  { drug:'Temozolomide', tumor:'glioma',     D:0.18,  lam:0.002, k:0.06,  r:20, diff:'low',      cls:'Alkylating agent' },
-  { drug:'Dacarbazine',  tumor:'melanoma',   D:0.08,  lam:0.005, k:0.065, r:24, diff:'medium',   cls:'Alkylating agent' },
+const DB=[
+  {drug:'Doxorubicin',tumor:'breast',D:.08,lam:.005,k:.06,r:22,diff:'medium',cls:'Anthracycline'},
+  {drug:'Doxorubicin',tumor:'pancreatic',D:.02,lam:.008,k:.04,r:28,diff:'very high',cls:'Anthracycline'},
+  {drug:'Doxorubicin',tumor:'glioma',D:.10,lam:.003,k:.05,r:20,diff:'medium',cls:'Anthracycline'},
+  {drug:'Doxorubicin',tumor:'melanoma',D:.05,lam:.007,k:.07,r:24,diff:'high',cls:'Anthracycline'},
+  {drug:'Paclitaxel',tumor:'breast',D:.06,lam:.004,k:.05,r:22,diff:'medium',cls:'Taxane'},
+  {drug:'Paclitaxel',tumor:'pancreatic',D:.015,lam:.006,k:.03,r:28,diff:'very high',cls:'Taxane'},
+  {drug:'Paclitaxel',tumor:'glioma',D:.08,lam:.003,k:.045,r:20,diff:'medium',cls:'Taxane'},
+  {drug:'Paclitaxel',tumor:'melanoma',D:.04,lam:.006,k:.06,r:24,diff:'high',cls:'Taxane'},
+  {drug:'Cisplatin',tumor:'breast',D:.12,lam:.003,k:.08,r:22,diff:'low',cls:'Platinum'},
+  {drug:'Cisplatin',tumor:'pancreatic',D:.03,lam:.005,k:.05,r:28,diff:'high',cls:'Platinum'},
+  {drug:'Cisplatin',tumor:'glioma',D:.15,lam:.002,k:.07,r:20,diff:'low',cls:'Platinum'},
+  {drug:'Cisplatin',tumor:'colorectal',D:.09,lam:.004,k:.07,r:24,diff:'medium',cls:'Platinum'},
+  {drug:'Gemcitabine',tumor:'pancreatic',D:.025,lam:.009,k:.035,r:28,diff:'very high',cls:'Antimetabolite'},
+  {drug:'Gemcitabine',tumor:'breast',D:.07,lam:.005,k:.055,r:22,diff:'medium',cls:'Antimetabolite'},
+  {drug:'Gemcitabine',tumor:'colorectal',D:.06,lam:.006,k:.05,r:24,diff:'medium',cls:'Antimetabolite'},
+  {drug:'Trastuzumab',tumor:'breast',D:.01,lam:.001,k:.12,r:22,diff:'medium',cls:'Monoclonal Ab'},
+  {drug:'Trastuzumab',tumor:'pancreatic',D:.005,lam:.002,k:.08,r:28,diff:'very high',cls:'Monoclonal Ab'},
+  {drug:'5-Fluorouracil',tumor:'colorectal',D:.11,lam:.004,k:.075,r:24,diff:'low',cls:'Antimetabolite'},
+  {drug:'5-Fluorouracil',tumor:'breast',D:.10,lam:.004,k:.07,r:22,diff:'low',cls:'Antimetabolite'},
+  {drug:'Temozolomide',tumor:'glioma',D:.18,lam:.002,k:.06,r:20,diff:'low',cls:'Alkylating agent'},
+  {drug:'Dacarbazine',tumor:'melanoma',D:.08,lam:.005,k:.065,r:24,diff:'medium',cls:'Alkylating agent'},
 ];
+const PRESETS={};
+DB.forEach(d=>{PRESETS[d.drug.toLowerCase().replace(/[\s-]/g,'_')+'_'+d.tumor]=d;});
+let simResult=null,aiParams=null,apiKey='';
 
-const PRESETS = {};
-DB.forEach(d => { PRESETS[d.drug.toLowerCase().replace(/[\s-]/g,'_')+'_'+d.tumor] = d; });
+window.addEventListener('load',()=>{setTimeout(()=>document.getElementById('loader').classList.add('done'),1500);});
 
-/* =========================================================
-   STATE
-   ========================================================= */
-let simResult = null;
-let aiParams   = null;
-let apiKey     = '';
-
-/* =========================================================
-   TAB SWITCHING
-   ========================================================= */
-function switchTab(name) {
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('#nav button').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
-  const idx = ['about','simulation','ai','results','database'].indexOf(name);
+function switchTab(name){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('#nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  const idx=['about','simulation','ai','results','database'].indexOf(name);
   document.querySelectorAll('#nav button')[idx].classList.add('active');
-  if (name === 'results') renderResults();
-  if (name === 'database') renderDB();
+  if(name==='results')renderResults();
+  if(name==='database')renderDB();
 }
 
-/* =========================================================
-   SLIDER SYNC
-   ========================================================= */
-function sy(id, v) {
-  const fmt = {
-    D:    (v/100).toFixed(2),
-    lam:  (v/1000).toFixed(3),
-    k:    (v/100).toFixed(2),
-    r:    v + ' px',
-    steps: v
-  };
-  document.getElementById('v'+id).textContent = fmt[id];
+function sy(id,v){
+  const fmt={D:(v/100).toFixed(2),lam:(v/1000).toFixed(3),k:(v/100).toFixed(2),r:v+' px',steps:v};
+  document.getElementById('v'+id).textContent=fmt[id];
+}
+function setSliders(p){
+  document.getElementById('sl-D').value=Math.round(p.D*100);
+  document.getElementById('sl-lam').value=Math.round(p.lam*1000);
+  document.getElementById('sl-k').value=Math.round(p.k*100);
+  document.getElementById('sl-r').value=p.r;
+  sy('D',Math.round(p.D*100));sy('lam',Math.round(p.lam*1000));sy('k',Math.round(p.k*100));sy('r',p.r);
+}
+function loadPreset(){
+  const drug=document.getElementById('drug-select').value,tumor=document.getElementById('tumor-select').value;
+  if(drug==='custom')return;
+  const p=PRESETS[drug+'_'+tumor];if(p)setSliders(p);
+}
+function getParams(){
+  return{D:parseFloat(document.getElementById('sl-D').value)/100,lam:parseFloat(document.getElementById('sl-lam').value)/1000,k:parseFloat(document.getElementById('sl-k').value)/100,r:parseInt(document.getElementById('sl-r').value),steps:parseInt(document.getElementById('sl-steps').value),mode:document.getElementById('mode-select').value,drug:document.getElementById('drug-select').value,tumor:document.getElementById('tumor-select').value};
 }
 
-function setSliders(p) {
-  document.getElementById('sl-D').value    = Math.round(p.D * 100);
-  document.getElementById('sl-lam').value  = Math.round(p.lam * 1000);
-  document.getElementById('sl-k').value    = Math.round(p.k * 100);
-  document.getElementById('sl-r').value    = p.r;
-  sy('D',    Math.round(p.D * 100));
-  sy('lam',  Math.round(p.lam * 1000));
-  sy('k',    Math.round(p.k * 100));
-  sy('r',    p.r);
-}
+const N=80;
+function buildRho(cx,cy,r){const rho=new Float32Array(N*N);for(let y=0;y<N;y++)for(let x=0;x<N;x++){const d=Math.sqrt((x-cx)**2+(y-cy)**2);rho[y*N+x]=d<=r?Math.max(.05,1-.5*(d/r)):Math.max(.05,.1+.4*Math.exp(-(d-r)/(r*.3)));}return rho;}
+function buildDField(cx,cy,r,D){const df=new Float32Array(N*N);for(let y=0;y<N;y++)for(let x=0;x<N;x++){const d=Math.sqrt((x-cx)**2+(y-cy)**2);df[y*N+x]=d<=r?D*(.4+.6*d/r):D;}return df;}
+function initC(mode,cx,cy,r){const C=new Float32Array(N*N);if(mode==='left_boundary'){for(let y=0;y<N;y++)C[y*N]=1;}else if(mode==='point'){C[cy*N+cx]=1;}else if(mode==='ring'){const rv=r+5;for(let y=0;y<N;y++)for(let x=0;x<N;x++)if(Math.abs(Math.sqrt((x-cx)**2+(y-cy)**2)-rv)<2)C[y*N+x]=1;}return C;}
+function pdeChunk(C,Df,rho,dx,dt,lam,k,steps,mode){const C2=new Float32Array(N*N);for(let s=0;s<steps;s++){for(let y=1;y<N-1;y++)for(let x=1;x<N-1;x++){const i=y*N+x,lap=(C[(y-1)*N+x]+C[(y+1)*N+x]+C[y*N+(x-1)]+C[y*N+(x+1)]-4*C[i])/(dx*dx);C2[i]=Math.max(0,C[i]+dt*Df[i]*lap-dt*lam*C[i]-dt*k*rho[i]*C[i]);}if(mode==='left_boundary'){for(let y=0;y<N;y++){C2[y*N]=1;C2[y*N+N-1]=0;}for(let x=0;x<N;x++){C2[x]=0;C2[(N-1)*N+x]=0;}}C.set(C2);}}
+function radialCurve(C,cx,cy){const maxR=Math.floor(N/2),sum=new Float64Array(maxR),cnt=new Int32Array(maxR);for(let y=0;y<N;y++)for(let x=0;x<N;x++){const d=Math.floor(Math.sqrt((x-cx)**2+(y-cy)**2));if(d<maxR){sum[d]+=C[y*N+x];cnt[d]++;}}return sum.map((v,i)=>cnt[i]>0?v/cnt[i]:0);}
+function calcMetrics(C,cx,cy,r){let ts=0,tc=0,maxC=0;for(let y=0;y<N;y++)for(let x=0;x<N;x++){const v=C[y*N+x];if(v>maxC)maxC=v;if(Math.sqrt((x-cx)**2+(y-cy)**2)<=r){ts+=v;tc++;}}const curve=radialCurve(C,cx,cy),half=maxC/2;let depth50=0;for(let i=curve.length-1;i>=0;i--)if(curve[i]>=half){depth50=i;break;}const covCount=Array.from(C).filter((v,i)=>{const y=Math.floor(i/N),x=i%N;return Math.sqrt((x-cx)**2+(y-cy)**2)<=r&&v>.1;}).length;return{tumorAvg:tc>0?(ts/tc).toFixed(3):'0.000',maxC:maxC.toFixed(3),depth50,coverage:tc>0?(covCount/tc*100).toFixed(1):'0.0'};}
 
-function loadPreset() {
-  const drug  = document.getElementById('drug-select').value;
-  const tumor = document.getElementById('tumor-select').value;
-  if (drug === 'custom') return;
-  const key = drug + '_' + tumor;
-  const p = PRESETS[key];
-  if (p) setSliders(p);
-}
-
-function getParams() {
-  return {
-    D:     parseFloat(document.getElementById('sl-D').value)    / 100,
-    lam:   parseFloat(document.getElementById('sl-lam').value)  / 1000,
-    k:     parseFloat(document.getElementById('sl-k').value)    / 100,
-    r:     parseInt(document.getElementById('sl-r').value),
-    steps: parseInt(document.getElementById('sl-steps').value),
-    mode:  document.getElementById('mode-select').value,
-    drug:  document.getElementById('drug-select').value,
-    tumor: document.getElementById('tumor-select').value,
-  };
-}
-
-/* =========================================================
-   PDE CORE
-   ========================================================= */
-const N = 80;
-
-function buildRho(cx, cy, r) {
-  const rho = new Float32Array(N * N);
-  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
-    const d = Math.sqrt((x-cx)**2 + (y-cy)**2);
-    rho[y*N+x] = d <= r
-      ? Math.max(0.05, 1.0 - 0.5*(d/r))
-      : Math.max(0.05, 0.1 + 0.4*Math.exp(-(d-r)/(r*0.3)));
+async function runSim(){
+  const btn=document.getElementById('run-btn');btn.disabled=true;btn.textContent='⟳ Running…';
+  document.getElementById('export-btn').disabled=true;
+  const p=getParams(),cx=N/2,cy=N/2,dx=1/N,dt=.9*dx*dx/(4*p.D+1e-10);
+  const C=initC(p.mode,cx,cy,p.r),rho=buildRho(cx,cy,p.r),Df=buildDField(cx,cy,p.r,p.D);
+  const chunks=10,chunk=Math.floor(p.steps/chunks);
+  document.getElementById('status').textContent='Solving PDE…';
+  for(let i=0;i<chunks;i++){
+    await new Promise(r=>setTimeout(r,0));
+    pdeChunk(C,Df,rho,dx,dt,p.lam,p.k,chunk,p.mode);
+    document.getElementById('prog').style.width=((i+1)/chunks*100).toFixed(0)+'%';
+    document.getElementById('heat-lbl').textContent=`step ${(i+1)*chunk} / ${p.steps}`;
+    document.getElementById('heat-corner').textContent=`max C = ${Math.max(...C).toFixed(3)}`;
+    drawHeatmap('heatmap',C,cx,cy,p.r,400,400);
   }
-  return rho;
+  const curve=radialCurve(C,cx,cy),metrics=calcMetrics(C,cx,cy,p.r);
+  drawCurve('curve-canvas',curve,p.r,1000,200);
+  document.getElementById('m-tavg').textContent=metrics.tumorAvg;
+  document.getElementById('m-max').textContent=metrics.maxC;
+  document.getElementById('m-depth').textContent=metrics.depth50;
+  document.getElementById('m-cov').textContent=metrics.coverage;
+  document.getElementById('status').textContent='Complete ✓';
+  document.getElementById('heat-lbl').textContent=`done — ${p.steps} steps`;
+  simResult={C:Array.from(C),curve:Array.from(curve),metrics,p};
+  document.getElementById('export-btn').disabled=false;
+  btn.disabled=false;btn.textContent='▶ Run simulation';
 }
-
-function buildDField(cx, cy, r, D) {
-  const df = new Float32Array(N * N);
-  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
-    const d = Math.sqrt((x-cx)**2 + (y-cy)**2);
-    df[y*N+x] = d <= r ? D*(0.4+0.6*d/r) : D;
-  }
-  return df;
-}
-
-function initConcentration(mode, cx, cy, r) {
-  const C = new Float32Array(N * N);
-  if (mode === 'left_boundary') {
-    for (let y = 0; y < N; y++) C[y*N] = 1.0;
-  } else if (mode === 'point') {
-    C[cy*N+cx] = 1.0;
-  } else if (mode === 'ring') {
-    const rv = r + 5;
-    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
-      if (Math.abs(Math.sqrt((x-cx)**2+(y-cy)**2) - rv) < 2) C[y*N+x] = 1.0;
-    }
-  }
-  return C;
-}
-
-function pdeChunk(C, D_field, rho, dx, dt, lam, k, steps, mode) {
-  const C2 = new Float32Array(N * N);
-  for (let s = 0; s < steps; s++) {
-    for (let y = 1; y < N-1; y++) for (let x = 1; x < N-1; x++) {
-      const i = y*N+x;
-      const lap = (C[(y-1)*N+x]+C[(y+1)*N+x]+C[y*N+(x-1)]+C[y*N+(x+1)]-4*C[i]) / (dx*dx);
-      C2[i] = Math.max(0, C[i] + dt*D_field[i]*lap - dt*lam*C[i] - dt*k*rho[i]*C[i]);
-    }
-    if (mode === 'left_boundary') {
-      for (let y = 0; y < N; y++) { C2[y*N] = 1.0; C2[y*N+N-1] = 0; }
-      for (let x = 0; x < N; x++) { C2[x] = 0; C2[(N-1)*N+x] = 0; }
-    }
-    C.set(C2);
-  }
-}
-
-function radialCurve(C, cx, cy) {
-  const maxR = Math.floor(N/2);
-  const sum = new Float64Array(maxR), cnt = new Int32Array(maxR);
-  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
-    const d = Math.floor(Math.sqrt((x-cx)**2+(y-cy)**2));
-    if (d < maxR) { sum[d] += C[y*N+x]; cnt[d]++; }
-  }
-  return sum.map((v,i) => cnt[i] > 0 ? v/cnt[i] : 0);
-}
-
-function calcMetrics(C, cx, cy, r) {
-  let ts=0, tc=0, maxC=0;
-  for (let y=0; y<N; y++) for (let x=0; x<N; x++) {
-    const v = C[y*N+x];
-    if (v > maxC) maxC = v;
-    if (Math.sqrt((x-cx)**2+(y-cy)**2) <= r) { ts+=v; tc++; }
-  }
-  const curve = radialCurve(C, cx, cy);
-  const half = maxC/2;
-  let depth50 = 0;
-  for (let i=curve.length-1; i>=0; i--) { if(curve[i]>=half){depth50=i;break;} }
-  const covCount = Array.from(C).filter((v,i)=>{
-    const y=Math.floor(i/N),x=i%N;
-    return Math.sqrt((x-cx)**2+(y-cy)**2)<=r && v>0.1;
-  }).length;
-  return {
-    tumorAvg: tc>0 ? (ts/tc).toFixed(3) : '0.000',
-    maxC: maxC.toFixed(3),
-    depth50,
-    coverage: tc>0 ? (covCount/tc*100).toFixed(1) : '0.0'
-  };
-}
-
-/* =========================================================
-   RUN SIMULATION
-   ========================================================= */
-async function runSim() {
-  const btn = document.getElementById('run-btn');
-  btn.disabled = true;
-  document.getElementById('export-btn').disabled = true;
-
-  const p = getParams();
-  const cx = N/2, cy = N/2;
-  const dx = 1.0/N;
-  const dt = 0.9*dx*dx/(4*p.D+1e-10);
-  const C = initConcentration(p.mode, cx, cy, p.r);
-  const rho = buildRho(cx, cy, p.r);
-  const Df  = buildDField(cx, cy, p.r, p.D);
-  const chunks = 10, chunk = Math.floor(p.steps/chunks);
-
-  document.getElementById('status').textContent = 'Running PDE…';
-
-  for (let i=0; i<chunks; i++) {
-    await new Promise(r => setTimeout(r, 0));
-    pdeChunk(C, Df, rho, dx, dt, p.lam, p.k, chunk, p.mode);
-    const pct = ((i+1)/chunks*100).toFixed(0);
-    document.getElementById('prog').style.width = pct+'%';
-    document.getElementById('heat-lbl').textContent = `step ${(i+1)*chunk} / ${p.steps}`;
-    drawHeatmap('heatmap', C, cx, cy, p.r, 320, 300);
-  }
-
-  const curve   = radialCurve(C, cx, cy);
-  const metrics = calcMetrics(C, cx, cy, p.r);
-  drawCurve('curve-canvas', curve, p.r, 900, 180);
-
-  document.getElementById('m-tavg').textContent = metrics.tumorAvg;
-  document.getElementById('m-max').textContent  = metrics.maxC;
-  document.getElementById('m-depth').textContent = metrics.depth50;
-  document.getElementById('m-cov').textContent  = metrics.coverage;
-  document.getElementById('status').textContent = 'Complete.';
-  document.getElementById('heat-lbl').textContent = `done — ${p.steps} steps`;
-
-  simResult = { C: Array.from(C), curve: Array.from(curve), metrics, p };
-  document.getElementById('export-btn').disabled = false;
-  btn.disabled = false;
-}
-
-function resetSim() {
-  const ctx = document.getElementById('heatmap').getContext('2d');
-  ctx.fillStyle='#0d1117'; ctx.fillRect(0,0,320,300);
-  const ctx2 = document.getElementById('curve-canvas').getContext('2d');
-  ctx2.clearRect(0,0,900,180);
+function resetSim(){
+  ['heatmap','curve-canvas'].forEach(id=>{const c=document.getElementById(id),ctx=c.getContext('2d');ctx.fillStyle='#030507';ctx.fillRect(0,0,c.width,c.height);});
   ['m-tavg','m-max','m-depth','m-cov'].forEach(id=>document.getElementById(id).textContent='—');
-  document.getElementById('prog').style.width='0%';
-  document.getElementById('status').textContent='';
-  document.getElementById('heat-lbl').textContent='ready — press Run';
-  simResult = null;
+  document.getElementById('prog').style.width='0%';document.getElementById('status').textContent='';
+  document.getElementById('heat-lbl').textContent='ready — press Run';document.getElementById('heat-corner').textContent='';
+  simResult=null;
 }
 
-/* =========================================================
-   DRAWING
-   ========================================================= */
-function magma(t) {
-  t = Math.max(0, Math.min(1, t));
-  const stops = [[0,0,4],[59,15,112],[140,41,129],[222,73,104],[254,159,109],[252,253,191]];
-  const idx = t*(stops.length-1), lo=Math.floor(idx), hi=Math.min(lo+1,stops.length-1), f=idx-lo;
+function magma(t){
+  t=Math.max(0,Math.min(1,t));
+  const stops=[[3,0,4],[62,4,100],[120,20,140],[180,45,122],[225,80,100],[255,130,80],[255,200,100],[252,253,191]];
+  const idx=t*(stops.length-1),lo=Math.floor(idx),hi=Math.min(lo+1,stops.length-1),f=idx-lo;
   return stops[lo].map((v,i)=>Math.round(v+f*(stops[hi][i]-v)));
 }
-
-function drawHeatmap(canvasId, C, cx, cy, r, W, H) {
-  const canvas = document.getElementById(canvasId);
-  canvas.width = W; canvas.height = H;
-  const ctx = canvas.getContext('2d');
-  const img = ctx.createImageData(W, H);
-  for (let py=0; py<H; py++) for (let px=0; px<W; px++) {
-    const gx=Math.floor(px/W*N), gy=Math.floor(py/H*N);
-    const [r2,g2,b2] = magma(C[gy*N+gx]);
-    const i=(py*W+px)*4;
-    img.data[i]=r2; img.data[i+1]=g2; img.data[i+2]=b2; img.data[i+3]=255;
-  }
+function drawHeatmap(canvasId,C,cx,cy,r,W,H){
+  const canvas=document.getElementById(canvasId);canvas.width=W;canvas.height=H;
+  const ctx=canvas.getContext('2d'),img=ctx.createImageData(W,H);
+  for(let py=0;py<H;py++)for(let px=0;px<W;px++){const gx=Math.floor(px/W*N),gy=Math.floor(py/H*N),[r2,g2,b2]=magma(C[gy*N+gx]),i=(py*W+px)*4;img.data[i]=r2;img.data[i+1]=g2;img.data[i+2]=b2;img.data[i+3]=255;}
   ctx.putImageData(img,0,0);
-  ctx.strokeStyle='rgba(0,255,255,0.7)';
-  ctx.lineWidth=1.5; ctx.setLineDash([4,3]);
-  ctx.beginPath();
-  ctx.arc(cx/N*W, cy/N*H, r/N*W, 0, Math.PI*2);
-  ctx.stroke(); ctx.setLineDash([]);
+  ctx.strokeStyle='rgba(0,0,0,.06)';ctx.lineWidth=1;for(let y=0;y<H;y+=3){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  ctx.strokeStyle='rgba(0,229,255,.75)';ctx.lineWidth=1.5;ctx.setLineDash([5,4]);
+  ctx.beginPath();ctx.arc(cx/N*W,cy/N*H,r/N*W,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+  ctx.strokeStyle='rgba(0,229,255,.2)';ctx.lineWidth=.5;
+  ctx.beginPath();ctx.moveTo(cx/N*W,0);ctx.lineTo(cx/N*W,H);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(0,cy/N*H);ctx.lineTo(W,cy/N*H);ctx.stroke();
 }
-
-function drawCurve(canvasId, curve, tumorR, W, H) {
-  const canvas = document.getElementById(canvasId);
-  canvas.width=W; canvas.height=H;
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle='#0d1117'; ctx.fillRect(0,0,W,H);
-  const pad={l:44,r:20,t:16,b:36};
-  const cW=W-pad.l-pad.r, cH=H-pad.t-pad.b;
-  const maxR=curve.length;
-
-  ctx.strokeStyle='#21262d'; ctx.lineWidth=0.5;
-  for (let i=0;i<=4;i++) {
-    const y2=pad.t+cH*(1-i/4);
-    ctx.beginPath(); ctx.moveTo(pad.l,y2); ctx.lineTo(pad.l+cW,y2); ctx.stroke();
-    ctx.fillStyle='#8b949e'; ctx.font='10px IBM Plex Mono,monospace';
-    ctx.fillText((i/4).toFixed(2), 2, y2+4);
-  }
-  ctx.strokeStyle='rgba(0,255,255,0.4)'; ctx.setLineDash([4,3]); ctx.lineWidth=1;
+function drawCurve(canvasId,curve,tumorR,W,H){
+  const canvas=document.getElementById(canvasId);canvas.width=W;canvas.height=H;
+  const ctx=canvas.getContext('2d');ctx.fillStyle='#030507';ctx.fillRect(0,0,W,H);
+  const pad={l:48,r:24,t:20,b:38},cW=W-pad.l-pad.r,cH=H-pad.t-pad.b,maxR=curve.length;
+  ctx.strokeStyle='rgba(99,130,166,.08)';ctx.lineWidth=.5;
+  for(let i=0;i<=5;i++){const y2=pad.t+cH*(1-i/5);ctx.beginPath();ctx.moveTo(pad.l,y2);ctx.lineTo(pad.l+cW,y2);ctx.stroke();ctx.fillStyle='rgba(99,130,166,.5)';ctx.font='10px Space Mono,monospace';ctx.fillText((i/5).toFixed(1),4,y2+4);}
+  for(let i=0;i<=5;i++){const x2=pad.l+(i/5)*cW;ctx.beginPath();ctx.moveTo(x2,pad.t);ctx.lineTo(x2,pad.t+cH);ctx.stroke();}
   const tx=pad.l+(tumorR/maxR)*cW;
-  ctx.beginPath(); ctx.moveTo(tx,pad.t); ctx.lineTo(tx,pad.t+cH); ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.fillStyle='rgba(0,255,255,0.6)'; ctx.font='10px IBM Plex Mono,monospace';
-  ctx.fillText('tumor wall',tx+3,pad.t+11);
-
-  ctx.strokeStyle='#58a6ff'; ctx.lineWidth=2;
-  ctx.beginPath();
-  curve.forEach((v,i)=>{
-    const x2=pad.l+(i/maxR)*cW, y2=pad.t+cH*(1-v);
-    i===0 ? ctx.moveTo(x2,y2) : ctx.lineTo(x2,y2);
-  });
-  ctx.stroke();
-
-  ctx.fillStyle='#8b949e'; ctx.font='11px IBM Plex Mono,monospace';
-  ctx.fillText('Radial distance from tumor center (px)', pad.l+cW/2-120, H-6);
+  ctx.strokeStyle='rgba(0,229,255,.3)';ctx.setLineDash([5,4]);ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(tx,pad.t);ctx.lineTo(tx,pad.t+cH);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='rgba(0,229,255,.5)';ctx.font='10px Space Mono,monospace';ctx.fillText('tumor wall',tx+4,pad.t+13);
+  ctx.beginPath();curve.forEach((v,i)=>{const x2=pad.l+(i/maxR)*cW,y2=pad.t+cH*(1-v);i===0?ctx.moveTo(x2,y2):ctx.lineTo(x2,y2);});
+  ctx.lineTo(pad.l+cW,pad.t+cH);ctx.lineTo(pad.l,pad.t+cH);ctx.closePath();
+  ctx.fillStyle='rgba(77,158,255,.06)';ctx.fill();
+  const grad=ctx.createLinearGradient(pad.l,0,pad.l+cW,0);
+  grad.addColorStop(0,'#4d9eff');grad.addColorStop(.5,'#00e5ff');grad.addColorStop(1,'#3de383');
+  ctx.strokeStyle=grad;ctx.lineWidth=2.5;ctx.lineJoin='round';
+  ctx.beginPath();curve.forEach((v,i)=>{const x2=pad.l+(i/maxR)*cW,y2=pad.t+cH*(1-v);i===0?ctx.moveTo(x2,y2):ctx.lineTo(x2,y2);});ctx.stroke();
+  ctx.fillStyle='rgba(99,130,166,.5)';ctx.font='10px Space Mono,monospace';
+  ctx.fillText('Radial distance from tumor center (px)',pad.l+cW/2-130,H-6);
 }
 
-/* =========================================================
-   RESULTS TAB
-   ========================================================= */
-function renderResults() {
-  if (!simResult) return;
-  document.getElementById('results-empty').style.display   = 'none';
-  document.getElementById('results-content').style.display = '';
-
-  const { C, curve, metrics, p } = simResult;
-  const cx=N/2, cy=N/2;
-
-  document.getElementById('r-drug').textContent  = p.drug;
-  document.getElementById('r-tumor').textContent = p.tumor;
-  document.getElementById('r-tavg').textContent  = metrics.tumorAvg;
-  document.getElementById('r-depth').textContent = metrics.depth50;
-
-  drawHeatmap('result-heatmap', C, cx, cy, p.r, 400, 360);
-  drawCurve('result-curve', curve, p.r, 400, 360);
-
-  const tbody = document.getElementById('result-param-body');
-  tbody.innerHTML = [
-    ['Diffusion coefficient','D', p.D],
-    ['Degradation rate','λ', p.lam],
-    ['Uptake rate','k', p.k],
-    ['Tumor radius','r', p.r+' px'],
-    ['Simulation steps','n', p.steps],
-    ['Delivery mode','—', p.mode],
-  ].map(([n,s,v])=>`<tr><td>${n}</td><td><code>${s}</code></td><td>${v}</td></tr>`).join('');
-
-  const diff = p.D < 0.03 ? 'severely limited' : p.D < 0.07 ? 'moderately limited' : 'relatively good';
-  document.getElementById('report-text').innerHTML = `
-    <p>Simulation of <strong>${p.drug}</strong> penetration into a <strong>${p.tumor}</strong> tumor model
-    (radius ${p.r} px, delivery: ${p.mode.replace('_',' ')}).</p>
-    <p>After ${p.steps} time steps, the mean drug concentration within the tumor volume reached
-    <strong>${metrics.tumorAvg}</strong> (normalised units), with a peak concentration of
-    <strong>${metrics.maxC}</strong>. The 50% penetration depth was <strong>${metrics.depth50} px</strong>
-    from the tumor center. Tumor coverage above 10% threshold: <strong>${metrics.coverage}%</strong>.</p>
-    <p>With D = ${p.D}, drug transport is ${diff}. A degradation rate of λ = ${p.lam}
-    and uptake rate k = ${p.k} suggest ${p.k > 0.08 ? 'high' : p.k > 0.05 ? 'moderate' : 'low'}
-    cellular drug retention.</p>
-    <p><em>For research use only. Results are model approximations and do not substitute clinical data.</em></p>
-  `;
+function renderResults(){
+  if(!simResult)return;
+  document.getElementById('results-empty').style.display='none';
+  document.getElementById('results-content').style.display='';
+  const{C,curve,metrics,p}=simResult,cx=N/2,cy=N/2;
+  document.getElementById('r-drug').textContent=p.drug;
+  document.getElementById('r-tumor').textContent=p.tumor;
+  document.getElementById('r-tavg').textContent=metrics.tumorAvg;
+  document.getElementById('r-depth').textContent=metrics.depth50;
+  drawHeatmap('result-heatmap',C,cx,cy,p.r,500,460);
+  drawCurve('result-curve',curve,p.r,500,460);
+  document.getElementById('result-param-body').innerHTML=[['Diffusion coefficient','D',p.D],['Degradation rate','λ',p.lam],['Uptake rate','k',p.k],['Tumor radius','r',p.r+' px'],['Steps','n',p.steps],['Delivery mode','—',p.mode.replace(/_/g,' ')]].map(([n,s,v])=>`<tr><td>${n}</td><td><code>${s}</code></td><td>${v}</td></tr>`).join('');
+  const diff=p.D<.03?'severely limited':p.D<.07?'moderately limited':'relatively good';
+  document.getElementById('report-text').innerHTML=`<p>Simulation of <strong>${p.drug}</strong> penetration into a <strong>${p.tumor}</strong> tumor model (radius ${p.r} px, delivery: ${p.mode.replace(/_/g,' ')}).</p><p>After ${p.steps} time steps, mean drug concentration within the tumor reached <strong>${metrics.tumorAvg}</strong>, peak concentration <strong>${metrics.maxC}</strong>. 50% penetration depth: <strong>${metrics.depth50} px</strong>. Coverage above 10% threshold: <strong>${metrics.coverage}%</strong>.</p><p>With D = ${p.D}, drug transport is ${diff}. λ = ${p.lam} and k = ${p.k} suggest ${p.k>.08?'high':p.k>.05?'moderate':'low'} cellular drug retention.</p><p style="color:var(--text3);font-size:.8rem;"><em>For research use only. Results are model approximations and do not substitute clinical data.</em></p>`;
 }
+function exportCSV(){if(!simResult)return;const{curve,p}=simResult;const csv=[['r_px','mean_C'],...curve.map((v,i)=>[i,v.toFixed(6)])].map(r=>r.join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=`PDEOncology_${p.drug}_${p.tumor}.csv`;a.click();}
+function exportPNG(){const a=document.createElement('a');a.href=document.getElementById('result-heatmap').toDataURL('image/png');a.download='PDEOncology_heatmap.png';a.click();}
+function printReport(){window.print();}
 
-function exportCSV() {
-  if (!simResult) return;
-  const { curve, metrics, p } = simResult;
-  const rows = [['radial_distance_px','mean_concentration'],...curve.map((v,i)=>[i,v.toFixed(6)])];
-  const csv  = rows.map(r=>r.join(',')).join('\n');
-  const blob = new Blob([csv], {type:'text/csv'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `PDEOncology_${p.drug}_${p.tumor}.csv`;
-  a.click();
+function saveKey(){apiKey=document.getElementById('api-key-input').value.trim();document.getElementById('key-status').textContent=apiKey?'✓ Key saved (session only)':'No key entered.';}
+
+function localFallback(input){
+  const q=input.toLowerCase();
+  const tumorMap={pancreatic:['pancrea','pdac'],breast:['breast','mammary','her2','tnbc'],glioma:['glio','brain','gbm'],melanoma:['melanoma','skin'],colorectal:['colorect','colon','rectal']};
+  let matchedTumor='breast';
+  for(const[tumor,keys]of Object.entries(tumorMap))if(keys.some(k=>q.includes(k))){matchedTumor=tumor;break;}
+  const drugMap={doxorubicin:['doxorubicin','doxo','adriamycin'],paclitaxel:['paclitaxel','taxol','taxane'],cisplatin:['cisplatin','platinum'],gemcitabine:['gemcitabine','gemzar'],trastuzumab:['trastuzumab','herceptin','adc','her2'],'5_fluorouracil':['fluorouracil','5-fu','5fu'],temozolomide:['temozolomide','tmz'],dacarbazine:['dacarbazine','dtic']};
+  let matchedDrug=null;
+  for(const[drug,keys]of Object.entries(drugMap))if(keys.some(k=>q.includes(k))){matchedDrug=drug;break;}
+  let entry=null;
+  if(matchedDrug)entry=DB.find(d=>d.drug.toLowerCase().replace(/[\s-]/g,'_')===matchedDrug&&d.tumor===matchedTumor);
+  if(!entry)entry=DB.find(d=>d.tumor===matchedTumor);
+  if(!entry)entry=DB[0];
+  const diffNotes={'low':'Good tissue penetration predicted.','medium':'Moderate barriers — drug reaches most of tumor.','high':'Elevated IFP/stroma may limit delivery.','very high':'Severe barriers — restricted access to tumor core.'};
+  return{drug:entry.drug,tumor:entry.tumor,D:entry.D,lam:entry.lam,k:entry.k,tumor_radius:entry.r,penetration_difficulty:entry.diff,drug_class:entry.cls,notes:diffNotes[entry.diff]+` (local DB — D=${entry.D}, λ=${entry.lam}, k=${entry.k})`,source:'local'};
 }
-
-function exportPNG() {
-  const canvas = document.getElementById('result-heatmap');
-  const a = document.createElement('a');
-  a.href = canvas.toDataURL('image/png');
-  a.download = 'PDEOncology_heatmap.png';
-  a.click();
+function showParams(params,resp,tags,preview){
+  resp.className='ai-response';resp.textContent=params.notes||'Parameters extracted.';
+  const src=params.source==='local'?`<span class="tag amber">local DB</span>`:`<span class="tag green">Claude API</span>`;
+  tags.innerHTML=[`drug: ${params.drug}`,`tumor: ${params.tumor}`,`D = ${params.D}`,`λ = ${params.lam}`,`k = ${params.k}`,`r = ${params.tumor_radius}px`,`difficulty: ${params.penetration_difficulty}`,`class: ${params.drug_class||'—'}`].map((t,i)=>`<span class="tag ${i===6?'amber':i===0?'blue':''}">${t}</span>`).join('')+src;
+  aiParams=params;preview.style.display='';
+  document.getElementById('ai-param-body').innerHTML=[['Drug',params.drug,'—'],['Tumor',params.tumor,'—'],['D (diffusion)',params.D,'Mol. weight / tissue tortuosity'],['λ (degradation)',params.lam,'Metabolic clearance'],['k (uptake)',params.k,'Receptor expression'],['Tumor radius',params.tumor_radius+' px','Anatomical estimate'],['Difficulty',params.penetration_difficulty,'Overall penetration barrier'],['Source',params.source==='local'?'Local DB (fallback)':'Claude API','']].map(([n,v,note])=>`<tr><td>${n}</td><td><strong>${v}</strong></td><td style="color:var(--text3);font-size:.78rem;">${note}</td></tr>`).join('');
 }
-
-function printReport() { window.print(); }
-
-/* =========================================================
-   AI DRUG INPUT
-   ========================================================= */
-function saveKey() {
-  apiKey = document.getElementById('api-key-input').value.trim();
-  document.getElementById('key-status').textContent = apiKey ? '✓ Key saved (session only)' : 'No key entered.';
-}
-
-/* =========================================================
-   FALLBACK: local fuzzy match when no API key
-   ========================================================= */
-function localFallback(input) {
-  const q = input.toLowerCase();
-
-  // 1. match tumor type
-  const tumorMap = {
-    pancreatic: ['pancrea','pdac','pancreas'],
-    breast:     ['breast','mammary','her2','tnbc','triple negative'],
-    glioma:     ['glio','brain','gbm','gbm','astro','cerebr'],
-    melanoma:   ['melanoma','skin','cutaneous'],
-    colorectal: ['colorect','colon','rectal','crc'],
-  };
-  let matchedTumor = 'breast';
-  for (const [tumor, keys] of Object.entries(tumorMap)) {
-    if (keys.some(k => q.includes(k))) { matchedTumor = tumor; break; }
+async function askAI(){
+  const input=document.getElementById('ai-input').value.trim();if(!input)return;
+  const btn=document.getElementById('ai-btn'),resp=document.getElementById('ai-response'),tags=document.getElementById('ai-tags'),preview=document.getElementById('ai-preview');
+  btn.disabled=true;tags.innerHTML='';preview.style.display='none';
+  if(!apiKey){resp.className='ai-response thinking';resp.textContent='Matching from local database…';await new Promise(r=>setTimeout(r,700));showParams(localFallback(input),resp,tags,preview);btn.disabled=false;return;}
+  resp.className='ai-response thinking';resp.textContent='Claude is analysing…';
+  try{
+    const res=await fetch('https://pde-proxy.genius-amy-shi.workers.dev',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:`You are a biophysics expert. Given a drug + tumor description, return ONLY valid JSON (no markdown):\n{"drug":"name","tumor":"type","D":<0.005-0.25>,"lam":<0.001-0.05>,"k":<0.01-0.15>,"tumor_radius":<12-38>,"notes":"2-3 sentences","penetration_difficulty":"low|medium|high|very high","drug_class":"class"}`,messages:[{role:'user',content:input}]})});
+    const data=await res.json();
+    const text=(data.content?.find(b=>b.type==='text')?.text||'').replace(/```json|```/g,'').trim();
+    let params;try{params=JSON.parse(text);}catch(e){throw new Error('Parse error');}
+    params.source='claude';showParams(params,resp,tags,preview);
+  }catch(e){
+    resp.className='ai-response thinking';resp.textContent='API error — falling back to local database…';
+    await new Promise(r=>setTimeout(r,800));const params=localFallback(input);params.notes='[API fallback] '+params.notes;showParams(params,resp,tags,preview);
   }
-
-  // 2. match drug name
-  const drugMap = {
-    doxorubicin:   ['doxorubicin','doxo','adriamycin'],
-    paclitaxel:    ['paclitaxel','taxol','taxane'],
-    cisplatin:     ['cisplatin','cis-platin','platinum'],
-    gemcitabine:   ['gemcitabine','gemzar'],
-    trastuzumab:   ['trastuzumab','herceptin','antibody','adc','her2'],
-    '5_fluorouracil':['fluorouracil','5-fu','5fu'],
-    temozolomide:  ['temozolomide','temodar','tmz'],
-    dacarbazine:   ['dacarbazine','dtic'],
-  };
-  let matchedDrug = null;
-  for (const [drug, keys] of Object.entries(drugMap)) {
-    if (keys.some(k => q.includes(k))) { matchedDrug = drug; break; }
-  }
-
-  // 3. find best DB entry
-  let entry = null;
-  if (matchedDrug) {
-    entry = DB.find(d =>
-      d.drug.toLowerCase().replace(/[\s-]/g,'_') === matchedDrug &&
-      d.tumor === matchedTumor
-    );
-  }
-  if (!entry) {
-    entry = DB.find(d => d.tumor === matchedTumor);
-  }
-  if (!entry) entry = DB[0];
-
-  // 4. build difficulty notes
-  const diffNotes = {
-    'low':       'Drug transport is expected to be relatively unimpeded. Good tissue penetration predicted.',
-    'medium':    'Moderate penetration barriers present. Drug should reach most of the tumor volume.',
-    'high':      'Significant penetration barriers. Elevated IFP or dense stroma may limit drug delivery.',
-    'very high': 'Severe penetration barriers. High stromal density and IFP severely restrict drug access to tumor core.',
-  };
-
-  return {
-    drug:                   entry.drug,
-    tumor:                  entry.tumor,
-    D:                      entry.D,
-    lam:                    entry.lam,
-    k:                      entry.k,
-    tumor_radius:           entry.r,
-    penetration_difficulty: entry.diff,
-    drug_class:             entry.cls,
-    notes:                  diffNotes[entry.diff] +
-      ` Parameters estimated from local database (no API key). D=${entry.D}, λ=${entry.lam}, k=${entry.k}.`,
-    source: 'local'
-  };
+  btn.disabled=false;
 }
+function applyAIParams(){if(!aiParams)return;setSliders({D:aiParams.D,lam:aiParams.lam,k:aiParams.k,r:aiParams.tumor_radius});document.getElementById('drug-select').value='custom';document.getElementById('tumor-select').value=Object.keys({breast:1,pancreatic:1,glioma:1,melanoma:1,colorectal:1}).find(t=>aiParams.tumor.toLowerCase().includes(t))||'breast';switchTab('simulation');}
 
-function showParams(params, resp, tags, preview) {
-  resp.className = 'ai-response';
-  resp.textContent = params.notes || 'Parameters extracted.';
+let dbFiltered=[...DB];
+const diffColor={'low':'green','medium':'blue','high':'amber','very high':'red'};
+function renderDB(){document.getElementById('db-tbody').innerHTML=dbFiltered.map(d=>`<tr style="cursor:pointer;" onclick="loadFromDB(${DB.indexOf(d)})"><td><strong style="color:var(--text)">${d.drug}</strong></td><td>${d.tumor}</td><td><code>${d.D}</code></td><td><code>${d.lam}</code></td><td><code>${d.k}</code></td><td>${d.r}</td><td><span class="tag ${diffColor[d.diff]||''}">${d.diff}</span></td><td><span class="tag purple">${d.cls}</span></td><td><button class="btn btn-ghost" style="padding:3px 10px;font-size:.72rem;">Load →</button></td></tr>`).join('');}
+function filterDB(){const q=document.getElementById('db-search').value.toLowerCase(),tumor=document.getElementById('db-filter-tumor').value,diff=document.getElementById('db-filter-diff').value;dbFiltered=DB.filter(d=>(!q||d.drug.toLowerCase().includes(q)||d.tumor.includes(q)||d.cls.toLowerCase().includes(q))&&(!tumor||d.tumor===tumor)&&(!diff||d.diff===diff));renderDB();}
+function loadFromDB(idx){const d=DB[idx];setSliders(d);const opt=[...document.getElementById('drug-select').options].find(o=>o.value===d.drug.toLowerCase().replace(/[\s-]/g,'_'));document.getElementById('drug-select').value=opt?opt.value:'custom';document.getElementById('tumor-select').value=d.tumor;switchTab('simulation');}
 
-  const sourceTag = params.source === 'local'
-    ? `<span class="tag amber" style="margin-left:4px;">local DB — no API key</span>`
-    : `<span class="tag green" style="margin-left:4px;">Claude API</span>`;
-
-  tags.innerHTML = [
-    `drug: ${params.drug}`,
-    `tumor: ${params.tumor}`,
-    `D = ${params.D}`,
-    `λ = ${params.lam}`,
-    `k = ${params.k}`,
-    `r = ${params.tumor_radius}px`,
-    `difficulty: ${params.penetration_difficulty}`,
-    `class: ${params.drug_class||'—'}`
-  ].map((t,i)=>`<span class="tag ${i===6?'amber':i===0?'blue':''}">${t}</span>`).join('') + sourceTag;
-
-  aiParams = params;
-  preview.style.display = '';
-  const pb = document.getElementById('ai-param-body');
-  pb.innerHTML = [
-    ['Drug',           params.drug,                    '—'],
-    ['Tumor',          params.tumor,                   '—'],
-    ['D (diffusion)',  params.D,                       'Molecular weight / tissue tortuosity'],
-    ['λ (degradation)',params.lam,                     'Metabolic clearance rate'],
-    ['k (uptake)',     params.k,                       'Receptor/transporter expression'],
-    ['Tumor radius',   params.tumor_radius+' px',      'Anatomical estimate'],
-    ['Difficulty',     params.penetration_difficulty,  'Overall penetration barrier'],
-    ['Source',         params.source==='local' ? 'Local database (fallback)' : 'Claude API', ''],
-  ].map(([n,v,note])=>`<tr><td>${n}</td><td><strong>${v}</strong></td><td style="color:#8b949e;font-size:.8rem;">${note}</td></tr>`).join('');
-}
-
-async function askAI() {
-  const input = document.getElementById('ai-input').value.trim();
-  if (!input) return;
-  const btn    = document.getElementById('ai-btn');
-  const resp   = document.getElementById('ai-response');
-  const tags   = document.getElementById('ai-tags');
-  const preview = document.getElementById('ai-preview');
-
-  btn.disabled = true;
-  tags.innerHTML = '';
-  preview.style.display = 'none';
-
-  // ── No API key → use local fallback immediately ──
-  if (!apiKey) {
-    resp.className = 'ai-response thinking';
-    resp.textContent = 'No API key detected — matching from local database…';
-    await new Promise(r => setTimeout(r, 600)); // brief pause so user sees the message
-    const params = localFallback(input);
-    showParams(params, resp, tags, preview);
-    btn.disabled = false;
-    return;
-  }
-
-  // ── API key present → call Claude ──
-  resp.className = 'ai-response thinking';
-  resp.textContent = 'Claude is analysing…';
-
-  try {
-    const res = await fetch('https://pde-proxy.genius-amy-shi.workers.dev', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        system: `You are a biophysics expert specialising in tumor drug penetration modelling.
-Given a plain-English description of a drug and tumor type, return ONLY valid JSON (no markdown fences, no preamble):
-{
-  "drug": "drug name",
-  "tumor": "tumor type",
-  "D": <float 0.005-0.25>,
-  "lam": <float 0.001-0.05>,
-  "k": <float 0.01-0.15>,
-  "tumor_radius": <int 12-38>,
-  "notes": "2-3 sentences on expected penetration and key barriers",
-  "penetration_difficulty": "low|medium|high|very high",
-  "drug_class": "drug class string"
-}
-Base D on molecular weight (small molecules ~0.08-0.15, large antibodies ~0.005-0.015).
-lam reflects metabolic stability. k reflects receptor/transporter expression.`,
-        messages: [{ role: 'user', content: input }]
-      })
-    });
-
-    const data = await res.json();
-    const text = (data.content?.find(b=>b.type==='text')?.text||'').replace(/```json|```/g,'').trim();
-    let params;
-    try { params = JSON.parse(text); } catch(e) { throw new Error('Could not parse Claude response.'); }
-    params.source = 'claude';
-    showParams(params, resp, tags, preview);
-
-  } catch(e) {
-    // ── API failed → graceful fallback ──
-    resp.className = 'ai-response thinking';
-    resp.textContent = `API unavailable (${e.message}) — falling back to local database…`;
-    await new Promise(r => setTimeout(r, 800));
-    const params = localFallback(input);
-    params.notes = `[API error — local fallback used] ` + params.notes;
-    showParams(params, resp, tags, preview);
-  }
-
-  btn.disabled = false;
-}
-
-function applyAIParams() {
-  if (!aiParams) return;
-  setSliders({ D:aiParams.D, lam:aiParams.lam, k:aiParams.k, r:aiParams.tumor_radius });
-  document.getElementById('drug-select').value  = 'custom';
-  document.getElementById('tumor-select').value = Object.keys({breast:1,pancreatic:1,glioma:1,melanoma:1,colorectal:1})
-    .find(t=>aiParams.tumor.toLowerCase().includes(t)) || 'breast';
-  switchTab('simulation');
-}
-
-/* =========================================================
-   DRUG DATABASE
-   ========================================================= */
-let dbFiltered = [...DB];
-
-function difficultyDots(d) {
-  const levels = {'low':1,'medium':2,'high':3,'very high':4};
-  const n = levels[d] || 0;
-  const colors = {1:'green',2:'green',3:'amber',4:'red'};
-  const c = colors[n]||'';
-  return Array.from({length:4},(_,i)=>`<span class="tag ${i<n?c:''}" style="padding:0 4px;margin:1px;">${i<n?'●':'○'}</span>`).join('');
-}
-
-function renderDB() {
-  const tbody = document.getElementById('db-tbody');
-  tbody.innerHTML = dbFiltered.map(d=>`
-    <tr style="cursor:pointer;" onclick="loadFromDB(${DB.indexOf(d)})">
-      <td><strong>${d.drug}</strong></td>
-      <td>${d.tumor}</td>
-      <td><code>${d.D}</code></td>
-      <td><code>${d.lam}</code></td>
-      <td><code>${d.k}</code></td>
-      <td>${d.r}</td>
-      <td>${difficultyDots(d.diff)}</td>
-      <td><span class="tag">${d.cls}</span></td>
-      <td><button class="btn btn-ghost" style="padding:3px 10px;font-size:.75rem;">Load</button></td>
-    </tr>`).join('');
-}
-
-function filterDB() {
-  const q     = document.getElementById('db-search').value.toLowerCase();
-  const tumor = document.getElementById('db-filter-tumor').value;
-  const diff  = document.getElementById('db-filter-diff').value;
-  dbFiltered  = DB.filter(d=>
-    (!q    || d.drug.toLowerCase().includes(q) || d.tumor.includes(q) || d.cls.toLowerCase().includes(q)) &&
-    (!tumor|| d.tumor === tumor) &&
-    (!diff || d.diff  === diff)
-  );
-  renderDB();
-}
-
-function loadFromDB(idx) {
-  const d = DB[idx];
-  setSliders(d);
-  const drugKey = d.drug.toLowerCase().replace(/[\s-]/g,'_');
-  const opt = [...document.getElementById('drug-select').options].find(o=>o.value===drugKey);
-  document.getElementById('drug-select').value  = opt ? drugKey : 'custom';
-  document.getElementById('tumor-select').value = d.tumor;
-  switchTab('simulation');
-}
-
-/* =========================================================
-   INIT
-   ========================================================= */
 loadPreset();
 </script>
 </body>
