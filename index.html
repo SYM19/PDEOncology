@@ -326,6 +326,46 @@
           </div>
         </div>
       </div>
+      <!-- Animation Player -->
+      <div class="card section" id="anim-panel" style="display:none;">
+        <div class="card-header">
+          <div class="card-icon">▶</div>
+          <h2 style="margin:0;">Diffusion animation</h2>
+          <span id="anim-frame-badge" class="tag blue" style="margin-left:auto;font-size:.7rem;">frame 0 / 0</span>
+        </div>
+        <div style="display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap;">
+          <div style="flex:1;min-width:240px;">
+            <div class="canvas-box" style="aspect-ratio:1;">
+              <canvas id="anim-heatmap" width="400" height="400"></canvas>
+              <div class="canvas-overlay" id="anim-lbl">frame 0</div>
+            </div>
+          </div>
+          <div style="flex:2;min-width:300px;">
+            <div class="canvas-box" style="height:200px;">
+              <canvas id="anim-curve" width="700" height="200"></canvas>
+            </div>
+            <div style="margin-top:12px;">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                <span style="font-family:var(--mono);font-size:.72rem;color:var(--text2);width:60px;">Frame</span>
+                <input type="range" id="anim-scrub" min="0" max="0" step="1" value="0" oninput="scrubAnim(this.value)" style="flex:1;">
+                <span class="slider-val" id="anim-scrub-val">0</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span style="font-family:var(--mono);font-size:.72rem;color:var(--text2);width:60px;">Speed</span>
+                <input type="range" id="anim-speed" min="1" max="10" step="1" value="4" oninput="document.getElementById('anim-speed-val').textContent=this.value+'×'" style="flex:1;">
+                <span class="slider-val" id="anim-speed-val">4×</span>
+              </div>
+            </div>
+            <div class="btn-row" style="margin-top:.75rem;">
+              <button class="btn btn-primary" id="play-btn" onclick="togglePlay()">▶ Play</button>
+              <button class="btn btn-ghost" onclick="stepAnim(-1)">◀ Prev</button>
+              <button class="btn btn-ghost" onclick="stepAnim(1)">Next ▶</button>
+              <button class="btn btn-ghost" onclick="resetAnim()">⟳ Reset</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="card section">
         <div class="card-header"><div class="card-icon">📈</div><h2 style="margin:0;">Radial penetration curve</h2></div>
         <div class="canvas-box"><canvas id="curve-canvas" width="1000" height="200"></canvas></div>
@@ -484,35 +524,130 @@ function pdeChunk(C,Df,rho,dx,dt,lam,k,steps,mode){const C2=new Float32Array(N*N
 function radialCurve(C,cx,cy){const maxR=Math.floor(N/2),sum=new Float64Array(maxR),cnt=new Int32Array(maxR);for(let y=0;y<N;y++)for(let x=0;x<N;x++){const d=Math.floor(Math.sqrt((x-cx)**2+(y-cy)**2));if(d<maxR){sum[d]+=C[y*N+x];cnt[d]++;}}return sum.map((v,i)=>cnt[i]>0?v/cnt[i]:0);}
 function calcMetrics(C,cx,cy,r){let ts=0,tc=0,maxC=0;for(let y=0;y<N;y++)for(let x=0;x<N;x++){const v=C[y*N+x];if(v>maxC)maxC=v;if(Math.sqrt((x-cx)**2+(y-cy)**2)<=r){ts+=v;tc++;}}const curve=radialCurve(C,cx,cy),half=maxC/2;let depth50=0;for(let i=curve.length-1;i>=0;i--)if(curve[i]>=half){depth50=i;break;}const covCount=Array.from(C).filter((v,i)=>{const y=Math.floor(i/N),x=i%N;return Math.sqrt((x-cx)**2+(y-cy)**2)<=r&&v>.1;}).length;return{tumorAvg:tc>0?(ts/tc).toFixed(3):'0.000',maxC:maxC.toFixed(3),depth50,coverage:tc>0?(covCount/tc*100).toFixed(1):'0.0'};}
 
+/* animation state */
+let animFrames=[], animIdx=0, animTimer=null, animParams=null;
+
 async function runSim(){
   const btn=document.getElementById('run-btn');btn.disabled=true;btn.textContent='⟳ Running…';
   document.getElementById('export-btn').disabled=true;
+  document.getElementById('anim-panel').style.display='none';
+  stopAnim();
+  animFrames=[];
+
   const p=getParams(),cx=N/2,cy=N/2,dx=1/N,dt=.9*dx*dx/(4*p.D+1e-10);
   const C=initC(p.mode,cx,cy,p.r),rho=buildRho(cx,cy,p.r),Df=buildDField(cx,cy,p.r,p.D);
-  const chunks=10,chunk=Math.floor(p.steps/chunks);
+  const TOTAL_FRAMES=20;
+  const stepsPerFrame=Math.max(1,Math.floor(p.steps/TOTAL_FRAMES));
   document.getElementById('status').textContent='Solving PDE…';
-  for(let i=0;i<chunks;i++){
+
+  // capture frame 0
+  animFrames.push({C:new Float32Array(C),step:0});
+
+  for(let i=0;i<TOTAL_FRAMES;i++){
     await new Promise(r=>setTimeout(r,0));
-    pdeChunk(C,Df,rho,dx,dt,p.lam,p.k,chunk,p.mode);
-    document.getElementById('prog').style.width=((i+1)/chunks*100).toFixed(0)+'%';
-    document.getElementById('heat-lbl').textContent=`step ${(i+1)*chunk} / ${p.steps}`;
+    pdeChunk(C,Df,rho,dx,dt,p.lam,p.k,stepsPerFrame,p.mode);
+    const stepNum=(i+1)*stepsPerFrame;
+    animFrames.push({C:new Float32Array(C),step:stepNum});
+    document.getElementById('prog').style.width=((i+1)/TOTAL_FRAMES*100).toFixed(0)+'%';
+    document.getElementById('heat-lbl').textContent=`step ${stepNum} / ${p.steps}`;
     document.getElementById('heat-corner').textContent=`max C = ${Math.max(...C).toFixed(3)}`;
     drawHeatmap('heatmap',C,cx,cy,p.r,400,400);
   }
+
   const curve=radialCurve(C,cx,cy),metrics=calcMetrics(C,cx,cy,p.r);
   drawCurve('curve-canvas',curve,p.r,1000,200);
   document.getElementById('m-tavg').textContent=metrics.tumorAvg;
   document.getElementById('m-max').textContent=metrics.maxC;
   document.getElementById('m-depth').textContent=metrics.depth50;
   document.getElementById('m-cov').textContent=metrics.coverage;
-  document.getElementById('status').textContent='Complete ✓';
+  document.getElementById('status').textContent='Complete ✓ — animation ready';
   document.getElementById('heat-lbl').textContent=`done — ${p.steps} steps`;
+
   simResult={C:Array.from(C),curve:Array.from(curve),metrics,p};
+  animParams={cx,cy,r:p.r,totalSteps:p.steps};
+
+  // set up animation panel
+  const scrub=document.getElementById('anim-scrub');
+  scrub.max=animFrames.length-1; scrub.value=0;
+  animIdx=0;
+  document.getElementById('anim-panel').style.display='';
+  renderAnimFrame(0);
+
   document.getElementById('export-btn').disabled=false;
   btn.disabled=false;btn.textContent='▶ Run simulation';
 }
+
+function renderAnimFrame(idx){
+  if(!animFrames.length||!animParams)return;
+  idx=Math.max(0,Math.min(idx,animFrames.length-1));
+  animIdx=idx;
+  const{C,step}=animFrames[idx];
+  const{cx,cy,r,totalSteps}=animParams;
+  drawHeatmap('anim-heatmap',C,cx,cy,r,400,400);
+  const curve=radialCurve(C,cx,cy);
+  drawCurve('anim-curve',curve,r,700,200);
+  document.getElementById('anim-lbl').textContent=`step ${step}`;
+  document.getElementById('anim-frame-badge').textContent=`frame ${idx+1} / ${animFrames.length}`;
+  document.getElementById('anim-scrub').value=idx;
+  document.getElementById('anim-scrub-val').textContent=idx;
+}
+
+function scrubAnim(val){
+  stopAnim();
+  renderAnimFrame(parseInt(val));
+  document.getElementById('play-btn').textContent='▶ Play';
+}
+
+function stepAnim(dir){
+  stopAnim();
+  document.getElementById('play-btn').textContent='▶ Play';
+  renderAnimFrame(animIdx+dir);
+}
+
+function resetAnim(){
+  stopAnim();
+  document.getElementById('play-btn').textContent='▶ Play';
+  renderAnimFrame(0);
+}
+
+function togglePlay(){
+  if(animTimer){
+    stopAnim();
+    document.getElementById('play-btn').textContent='▶ Play';
+  } else {
+    document.getElementById('play-btn').textContent='⏸ Pause';
+    playAnim();
+  }
+}
+
+function playAnim(){
+  if(animIdx>=animFrames.length-1) animIdx=0;
+  const speed=parseInt(document.getElementById('anim-speed').value);
+  const interval=Math.max(30,200/speed);
+  animTimer=setInterval(()=>{
+    animIdx++;
+    if(animIdx>=animFrames.length){
+      animIdx=animFrames.length-1;
+      stopAnim();
+      document.getElementById('play-btn').textContent='▶ Play';
+      return;
+    }
+    renderAnimFrame(animIdx);
+  },interval);
+}
+
+function stopAnim(){
+  if(animTimer){clearInterval(animTimer);animTimer=null;}
+}
 function resetSim(){
-  ['heatmap','curve-canvas'].forEach(id=>{const c=document.getElementById(id),ctx=c.getContext('2d');ctx.fillStyle='#030507';ctx.fillRect(0,0,c.width,c.height);});
+  stopAnim();
+  animFrames=[];animIdx=0;animParams=null;
+  document.getElementById('anim-panel').style.display='none';
+  document.getElementById('play-btn').textContent='▶ Play';
+  ['heatmap','curve-canvas','anim-heatmap','anim-curve'].forEach(id=>{
+    const c=document.getElementById(id);if(!c)return;
+    const ctx=c.getContext('2d');ctx.fillStyle='#030507';ctx.fillRect(0,0,c.width,c.height);
+  });
   ['m-tavg','m-max','m-depth','m-cov'].forEach(id=>document.getElementById(id).textContent='—');
   document.getElementById('prog').style.width='0%';document.getElementById('status').textContent='';
   document.getElementById('heat-lbl').textContent='ready — press Run';document.getElementById('heat-corner').textContent='';
