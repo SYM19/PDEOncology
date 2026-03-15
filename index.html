@@ -587,8 +587,8 @@
             <label>Steps</label>
             <select id="cmp-steps">
               <option value="200">200</option>
-              <option value="400" selected>400</option>
-              <option value="600">600</option>
+              <option value="400">400</option>
+              <option value="600" selected>600</option>
               <option value="800">800</option>
             </select>
           </div>
@@ -1148,7 +1148,7 @@ async function runCompare(){
   document.getElementById('cmp-status').textContent='Running Drug A…';
 
   const pA=getCmpParams('A'), pB=getCmpParams('B');
-  const cx=N/2, cy=N/2, dx=1/N;
+  const cx=Math.floor(N/3), cy=N/2, dx=1/N;
   const CHUNKS=10;
 
   // ── Drug A ──
