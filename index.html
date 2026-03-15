@@ -852,7 +852,11 @@ function buildDField(cx,cy,r,D){const df=new Float32Array(N*N);for(let y=0;y<N;y
 function initC(mode,cx,cy,r){const C=new Float32Array(N*N);if(mode==='left_boundary'){for(let y=0;y<N;y++)C[y*N]=1;}else if(mode==='point'){C[cy*N+cx]=1;}else if(mode==='ring'){const rv=r+5;for(let y=0;y<N;y++)for(let x=0;x<N;x++)if(Math.abs(Math.sqrt((x-cx)**2+(y-cy)**2)-rv)<2)C[y*N+x]=1;}return C;}
 function pdeChunk(C,Df,rho,dx,dt,lam,k,steps,mode){const C2=new Float32Array(N*N);for(let s=0;s<steps;s++){for(let y=1;y<N-1;y++)for(let x=1;x<N-1;x++){const i=y*N+x,lap=(C[(y-1)*N+x]+C[(y+1)*N+x]+C[y*N+(x-1)]+C[y*N+(x+1)]-4*C[i])/(dx*dx);C2[i]=Math.max(0,C[i]+dt*Df[i]*lap-dt*lam*C[i]-dt*k*rho[i]*C[i]);}if(mode==='left_boundary'){for(let y=0;y<N;y++){C2[y*N]=1;C2[y*N+N-1]=0;}for(let x=0;x<N;x++){C2[x]=0;C2[(N-1)*N+x]=0;}}C.set(C2);}}
 function radialCurve(C,cx,cy){const maxR=Math.floor(N/2),sum=new Float64Array(maxR),cnt=new Int32Array(maxR);for(let y=0;y<N;y++)for(let x=0;x<N;x++){const d=Math.floor(Math.sqrt((x-cx)**2+(y-cy)**2));if(d<maxR){sum[d]+=C[y*N+x];cnt[d]++;}}return sum.map((v,i)=>cnt[i]>0?v/cnt[i]:0);}
-function calcMetrics(C,cx,cy,r){let ts=0,tc=0,maxC=0;for(let y=0;y<N;y++)for(let x=0;x<N;x++){const v=C[y*N+x];if(v>maxC)maxC=v;if(Math.sqrt((x-cx)**2+(y-cy)**2)<=r){ts+=v;tc++;}}const curve=radialCurve(C,cx,cy),half=maxC/2;let depth50=0;for(let i=curve.length-1;i>=0;i--)if(curve[i]>=half){depth50=i;break;}const covCount=Array.from(C).filter((v,i)=>{const y=Math.floor(i/N),x=i%N;return Math.sqrt((x-cx)**2+(y-cy)**2)<=r&&v>.1;}).length;return{tumorAvg:tc>0?(ts/tc).toFixed(3):'0.000',maxC:maxC.toFixed(3),depth50,coverage:tc>0?(covCount/tc*100).toFixed(1):'0.0'};}
+function calcMetrics(C,cx,cy,r){let ts=0,tc=0,maxC=0;for(let y=0;y<N;y++)for(let x=0;x<N;x++){const v=C[y*N+x];if(v>maxC)maxC=v;if(Math.sqrt((x-cx)**2+(y-cy)**2)<=r){ts+=v;tc++;}}const curve=radialCurve(C,cx,cy),half=maxC/2;
+  // depth50: furthest radial distance from center where mean concentration >= half-max
+  let depth50=0;
+  for(let i=0;i<curve.length;i++)if(curve[i]>=half)depth50=i;
+  const covCount=Array.from(C).filter((v,i)=>{const y=Math.floor(i/N),x=i%N;return Math.sqrt((x-cx)**2+(y-cy)**2)<=r&&v>.1;}).length;return{tumorAvg:tc>0?(ts/tc).toFixed(3):'0.000',maxC:maxC.toFixed(3),depth50,coverage:tc>0?(covCount/tc*100).toFixed(1):'0.0'};}
 
 /* animation state */
 let animFrames=[], animIdx=0, animTimer=null, animParams=null;
@@ -1105,7 +1109,10 @@ function loadCmpPreset(ab){
   const drug=document.getElementById('cmp'+ab+'-drug').value;
   const tumor=document.getElementById('cmp-tumor').value;
   if(drug==='custom')return;
-  const p=PRESETS[drug+'_'+tumor]||PRESETS[drug+'_breast'];
+  // try exact match first, then any tumor match
+  const p=PRESETS[drug+'_'+tumor]
+    || DB.find(d=>d.drug.toLowerCase().replace(/[\s-]/g,'_')===drug)
+    || DB[0];
   if(!p)return;
   document.getElementById('cmp'+ab+'-D').value=Math.round(p.D*100);
   document.getElementById('cmp'+ab+'-lam').value=Math.round(p.lam*1000);
@@ -1119,14 +1126,18 @@ function getCmpParams(ab){
   const tumor=document.getElementById('cmp-tumor').value;
   const mode=document.getElementById('cmp-mode').value;
   const steps=parseInt(document.getElementById('cmp-steps').value);
-  const r=DB.find(d=>d.tumor===tumor)?.r||22;
+  const drugVal=document.getElementById('cmp'+ab+'-drug').value;
+  const drugLabel=document.getElementById('cmp'+ab+'-drug').options[document.getElementById('cmp'+ab+'-drug').selectedIndex].text;
+  // get radius from DB matching this drug+tumor, fallback to tumor default
+  const entry=PRESETS[drugVal+'_'+tumor]||DB.find(d=>d.tumor===tumor);
+  const r=entry?.r||22;
   return{
     D:parseFloat(document.getElementById('cmp'+ab+'-D').value)/100,
     lam:parseFloat(document.getElementById('cmp'+ab+'-lam').value)/1000,
     k:parseFloat(document.getElementById('cmp'+ab+'-k').value)/100,
     r, tumor, mode, steps,
-    drug:document.getElementById('cmp'+ab+'-drug').value,
-    label:document.getElementById('cmp'+ab+'-drug').options[document.getElementById('cmp'+ab+'-drug').selectedIndex].text,
+    drug:drugVal,
+    label:drugLabel,
   };
 }
 
