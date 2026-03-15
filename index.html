@@ -224,39 +224,182 @@
 
     <!-- ABOUT -->
     <div id="tab-about" class="tab-panel active">
+
+      <!-- Hero -->
       <div class="hero section">
         <div class="hero-title"><span class="pde">PDE</span><span class="onco">Oncology</span></div>
-        <p style="max-width:640px;">Browser-based simulator for tumor drug penetration using reaction-diffusion partial differential equations. All computation runs client-side — no server, no install.</p>
+        <p style="max-width:680px;font-size:.95rem;">A browser-based platform for simulating tumor drug penetration using reaction-diffusion partial differential equations. Designed for researchers, educators, and clinicians who want to explore how drug physicochemical properties and tumor microenvironment interact to determine therapeutic efficacy.</p>
         <div class="formula-box">∂C/∂t = ∇·(D(x,y)∇C) − λC − k·ρ(x,y)·C</div>
         <div class="hero-chips">
           <span class="hero-chip">FDM · FTCS scheme</span>
           <span class="hero-chip">80 × 80 grid</span>
+          <span class="hero-chip">20-frame animation</span>
           <span class="hero-chip">Claude API</span>
           <span class="hero-chip">client-side JS</span>
           <span class="hero-chip">open source</span>
         </div>
       </div>
+
       <hr class="divider"/>
-      <div class="grid-2 section">
-        <div class="feat-card"><div class="feat-icon blue">⬡</div><h3>Numerical method</h3><p>Explicit finite difference (FTCS) on a 2D uniform grid. Stability via CFL: <code>dt ≤ dx²/(4D)</code>. Grid represents a 1 cm × 1 cm tissue section.</p></div>
-        <div class="feat-card"><div class="feat-icon green">◈</div><h3>AI integration</h3><p>Uses Claude API to extract biophysically grounded PDE parameters from natural-language descriptions. Falls back to local database when offline.</p></div>
-        <div class="feat-card"><div class="feat-icon amber">◉</div><h3>Tumor model</h3><p>Radially-graded cell density field ρ(x,y). Diffusion coefficient D attenuated in tumor core to simulate IFP and extracellular matrix barriers.</p></div>
-        <div class="feat-card"><div class="feat-icon purple">▷</div><h3>How to use</h3><p>Go to <strong>Simulation</strong> and pick a preset, or use <strong>AI Drug Input</strong> to describe a drug + tumor. Run, then view analytics in <strong>Results</strong>.</p></div>
+
+      <!-- Motivation -->
+      <div class="section">
+        <h2>Motivation</h2>
+        <div class="card">
+          <p>Drug resistance and treatment failure in solid tumors are often not purely pharmacological — they are physical. Even potent drugs can fail to reach the tumor core due to elevated interstitial fluid pressure (IFP), dense extracellular matrix, and poor vascularisation. These barriers are especially pronounced in pancreatic ductal adenocarcinoma, glioblastoma, and triple-negative breast cancer.</p>
+          <p>PDEOncology provides an accessible simulation environment to visualise these phenomena. By adjusting diffusion coefficient D, degradation rate λ, and uptake rate k, users can intuitively explore how molecular weight, metabolic stability, and receptor expression shape drug distribution — without requiring a computational background.</p>
+          <p style="margin:0;">The AI integration (Claude API) goes one step further: users can describe a drug and tumor in plain English and receive biophysically grounded PDE parameters derived from published literature, enabling rapid hypothesis generation.</p>
+        </div>
       </div>
+
       <hr class="divider"/>
-      <h2>PDE parameters</h2>
-      <div class="card table-wrap">
-        <table>
-          <thead><tr><th>Parameter</th><th>Symbol</th><th>Meaning</th><th>Range</th></tr></thead>
-          <tbody>
-            <tr><td>Diffusion coefficient</td><td><code>D</code></td><td>Drug spread through tissue</td><td>0.005–0.25</td></tr>
-            <tr><td>Degradation rate</td><td><code>λ</code></td><td>Metabolic clearance</td><td>0.001–0.05</td></tr>
-            <tr><td>Uptake rate</td><td><code>k</code></td><td>Cellular drug absorption</td><td>0.01–0.15</td></tr>
-            <tr><td>Cell density</td><td><code>ρ(x,y)</code></td><td>Spatial tumor cell distribution</td><td>0.05–1.0</td></tr>
-            <tr><td>Tumor radius</td><td><code>r</code></td><td>Radius in grid units</td><td>10–38 px</td></tr>
-          </tbody>
-        </table>
+
+      <!-- How it works -->
+      <div class="section">
+        <h2>How it works</h2>
+        <div class="grid-2">
+          <div class="feat-card">
+            <div class="feat-icon blue">⬡</div>
+            <h3>Numerical method</h3>
+            <p>Explicit finite difference (FTCS scheme) on a uniform 2D grid (80 × 80 nodes, representing a 1 cm × 1 cm tissue cross-section). Stability is enforced via the CFL condition:</p>
+            <div class="formula-box" style="font-size:.8rem;margin:.5rem 0;">dt ≤ dx² / (4D)</div>
+            <p style="margin:0;">Each simulation step advances the concentration field C by one time increment dt, computed from user-specified parameters.</p>
+          </div>
+          <div class="feat-card">
+            <div class="feat-icon amber">◉</div>
+            <h3>Tumor geometry</h3>
+            <p>The tumor is modelled as a circular region with a radially-graded cell density field ρ(x,y). In the core, ρ approaches 1.0 (maximum uptake); in the periphery it decays exponentially.</p>
+            <p style="margin:0;">The diffusion coefficient D(x,y) is spatially attenuated inside the tumor to simulate elevated IFP and ECM resistance — the core receives only 40–100% of the free-tissue D value.</p>
+          </div>
+          <div class="feat-card">
+            <div class="feat-icon green">◈</div>
+            <h3>AI parameter extraction</h3>
+            <p>The AI Drug Input tab calls the Claude API (Anthropic) with a structured system prompt. Claude returns a JSON object containing D, λ, k, tumor radius, and a penetration difficulty rating grounded in published biophysical data.</p>
+            <p style="margin:0;">When no API key is provided, a local fuzzy-matching fallback searches the built-in drug database by drug name and tumor type keywords.</p>
+          </div>
+          <div class="feat-card">
+            <div class="feat-icon purple">▷</div>
+            <h3>Delivery modes</h3>
+            <p><strong>IV Infusion</strong> — Left boundary maintained at C = 1.0, simulating systemic drug delivery with a blood-vessel boundary.</p>
+            <p><strong>Vascular ring</strong> — Concentration initialised on an annular ring surrounding the tumor, simulating peri-tumoral vascular supply.</p>
+            <p style="margin:0;"><strong>Intratumoral injection</strong> — Point source at tumor centre, simulating direct locoregional drug delivery.</p>
+          </div>
+        </div>
       </div>
+
+      <hr class="divider"/>
+
+      <!-- Quickstart -->
+      <div class="section">
+        <h2>Quickstart</h2>
+        <div class="card">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;">
+            <div style="display:flex;gap:12px;align-items:flex-start;">
+              <div style="width:28px;height:28px;border-radius:50%;background:var(--blue-dim);border:1px solid rgba(77,158,255,.3);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.8rem;color:var(--blue);flex-shrink:0;">1</div>
+              <div><strong>Pick a preset</strong><p style="margin:.25rem 0 0;font-size:.82rem;">Go to <strong>Simulation</strong>, select a drug and tumor type from the dropdowns. Parameters auto-fill from the built-in database.</p></div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start;">
+              <div style="width:28px;height:28px;border-radius:50%;background:var(--blue-dim);border:1px solid rgba(77,158,255,.3);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.8rem;color:var(--blue);flex-shrink:0;">2</div>
+              <div><strong>Or use AI</strong><p style="margin:.25rem 0 0;font-size:.82rem;">Go to <strong>AI Drug Input</strong>, describe your drug + tumor in plain English. Claude fills the parameters automatically.</p></div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start;">
+              <div style="width:28px;height:28px;border-radius:50%;background:var(--blue-dim);border:1px solid rgba(77,158,255,.3);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.8rem;color:var(--blue);flex-shrink:0;">3</div>
+              <div><strong>Run &amp; animate</strong><p style="margin:.25rem 0 0;font-size:.82rem;">Click <strong>Run simulation</strong>. A 20-frame diffusion animation appears automatically — hit Play to watch drug spread over time.</p></div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start;">
+              <div style="width:28px;height:28px;border-radius:50%;background:var(--blue-dim);border:1px solid rgba(77,158,255,.3);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.8rem;color:var(--blue);flex-shrink:0;">4</div>
+              <div><strong>Export</strong><p style="margin:.25rem 0 0;font-size:.82rem;">Go to <strong>Results</strong> to view analytics, read the auto-generated report, and export CSV or PNG.</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <hr class="divider"/>
+
+      <!-- PDE parameters table -->
+      <div class="section">
+        <h2>PDE parameters</h2>
+        <div class="card table-wrap">
+          <table>
+            <thead><tr><th>Parameter</th><th>Symbol</th><th>Meaning</th><th>Typical range</th><th>Physical basis</th></tr></thead>
+            <tbody>
+              <tr><td>Diffusion coefficient</td><td><code>D</code></td><td>Rate of drug spread through tissue</td><td>0.005 – 0.25</td><td>Molecular weight, tissue tortuosity, ECM density</td></tr>
+              <tr><td>Degradation rate</td><td><code>λ</code></td><td>First-order drug breakdown</td><td>0.001 – 0.05</td><td>Metabolic clearance, plasma half-life</td></tr>
+              <tr><td>Uptake rate</td><td><code>k</code></td><td>Drug absorption by tumor cells</td><td>0.01 – 0.15</td><td>Receptor/transporter expression, endocytosis rate</td></tr>
+              <tr><td>Cell density</td><td><code>ρ(x,y)</code></td><td>Spatial distribution of tumor cells</td><td>0.05 – 1.0</td><td>Histological packing, necrotic core fraction</td></tr>
+              <tr><td>Tumor radius</td><td><code>r</code></td><td>Radius of tumor region in grid units</td><td>10 – 38 px</td><td>Tumour volume, imaging-derived size estimate</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <hr class="divider"/>
+
+      <!-- Limitations -->
+      <div class="section">
+        <h2>Limitations &amp; assumptions</h2>
+        <div class="card">
+          <p>PDEOncology is an educational and exploratory tool. The following simplifications are made:</p>
+          <ul style="font-size:.875rem;color:var(--text2);line-height:1.9;padding-left:1.25rem;margin-bottom:.75rem;">
+            <li>Tumor geometry is circular and homogeneous — real tumors are irregular and heterogeneous.</li>
+            <li>The model is 2D; real drug penetration is three-dimensional.</li>
+            <li>Cell density and diffusion fields are static — in reality they evolve with treatment response.</li>
+            <li>Convective transport (IFP-driven bulk flow) is not modelled; only diffusive transport is included.</li>
+            <li>Parameters are normalised and dimensionless; absolute quantitative predictions require careful calibration against experimental data.</li>
+            <li>The FTCS scheme is first-order in time and second-order in space; higher-order methods would improve accuracy for large D or small grids.</li>
+          </ul>
+          <p style="margin:0;color:var(--text3);font-size:.82rem;"><em>Results are model approximations and should not be used for clinical decision-making.</em></p>
+        </div>
+      </div>
+
+      <hr class="divider"/>
+
+      <!-- Team — placeholder -->
+      <div class="section">
+        <h2>Project team</h2>
+        <div class="card" style="border-left:3px solid var(--amber);">
+          <p style="color:var(--amber);font-family:var(--mono);font-size:.75rem;margin-bottom:.5rem;">COMING SOON</p>
+          <p style="margin:0;color:var(--text3);">Team member profiles and institutional affiliations will be added here.</p>
+        </div>
+      </div>
+
+      <hr class="divider"/>
+
+      <!-- References -->
+      <div class="section">
+        <h2>References</h2>
+        <div class="card">
+          <ol style="font-size:.82rem;color:var(--text2);line-height:2;padding-left:1.25rem;">
+            <li>Jain RK. Transport of molecules in the tumor interstitium: a review. <em>Cancer Research</em>, 47(12):3039–3051, 1987.</li>
+            <li>Nugent LJ, Jain RK. Extravascular diffusion in normal and neoplastic tissues. <em>Cancer Research</em>, 44(1):238–244, 1984.</li>
+            <li>Thurber GM, Schmidt MM, Wittrup KD. Antibody tumor penetration: transport opposed by systemic and antigen-mediated clearance. <em>Advanced Drug Delivery Reviews</em>, 60(12):1421–1434, 2008.</li>
+            <li>Chauhan VP, Stylianopoulos T, Boucher Y, Jain RK. Delivery of molecular and nanoscale medicine to tumors: transport barriers and strategies. <em>Annual Review of Chemical and Biomolecular Engineering</em>, 2:281–298, 2011.</li>
+            <li>Tannock IF, Lee CM, Tunggal JK, Cowan DS, Egorin MJ. Limited penetration of anticancer drugs through tumor tissue. <em>Clinical Cancer Research</em>, 8(3):878–884, 2002.</li>
+            <li>Minchinton AI, Tannock IF. Drug penetration in solid tumours. <em>Nature Reviews Cancer</em>, 6(8):583–592, 2006.</li>
+            <li>Kyle AH, Huxham LA, Yeoman DM, Minchinton AI. Limited tissue penetration of taxanes: a mechanism for resistance in solid tumors. <em>Clinical Cancer Research</em>, 13(9):2804–2810, 2007.</li>
+            <li style="color:var(--text3);font-style:italic;">Additional references will be added as the drug database expands. — <em>[placeholder]</em></li>
+          </ol>
+        </div>
+      </div>
+
+      <hr class="divider"/>
+
+      <!-- Version history -->
+      <div class="section">
+        <h2>Version history</h2>
+        <div class="card table-wrap">
+          <table>
+            <thead><tr><th>Version</th><th>Date</th><th>Changes</th></tr></thead>
+            <tbody>
+              <tr><td><span class="tag blue">v0.3</span></td><td>Mar 2026</td><td>UI embellish — Space Mono / Inter fonts, dark academic theme, grid background, loader animation, upgraded heatmap + curve rendering, mobile responsive</td></tr>
+              <tr><td><span class="tag">v0.2</span></td><td>Mar 2026</td><td>Cloudflare Worker CORS proxy, Claude API integration, AI fallback to local database, 5-tab layout, drug database (21 entries), CSV/PNG export</td></tr>
+              <tr><td><span class="tag">v0.1</span></td><td>Mar 2026</td><td>Initial release — FDM PDE solver, heatmap visualisation, radial penetration curve, 3 delivery modes</td></tr>
+              <tr><td><span class="tag amber">v0.4</span><span style="color:var(--text3);font-size:.75rem;margin-left:6px;">upcoming</span></td><td>—</td><td>20-frame diffusion animation, drug database expansion (50+ entries), Claude-generated Results report</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
 
     <!-- SIMULATION -->
