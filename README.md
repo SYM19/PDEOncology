@@ -3,11 +3,12 @@
 [![Live Demo](https://img.shields.io/badge/demo-pdeoncology.com-4d9eff?style=flat-square)](https://pdeoncology.com)
 [![Version](https://img.shields.io/badge/version-v0.4-3de383?style=flat-square)](https://pdeoncology.com)
 [![License](https://img.shields.io/badge/license-MIT-f0a54a?style=flat-square)](LICENSE)
-[![Built with](https://img.shields.io/badge/built%20with-vanilla%20JS-f05b5b?style=flat-square)]()
+[![PDEOutreach](https://img.shields.io/badge/outreach-PDEOutreach-a78bfa?style=flat-square)](https://sym19.github.io/pdeoutreach)
 
-A browser-based platform for simulating tumor drug penetration using **reaction-diffusion partial differential equations (PDEs)**. All computation runs client-side in JavaScript — no server, no installation required.
+A browser-based platform for simulating tumor drug penetration using **reaction-diffusion partial differential equations (PDEs)**. All computation runs client-side in JavaScript — no server, no installation required. Available in English and Chinese (中英双语).
 
-🔗 **Live site:** [pdeoncology.com](https://pdeoncology.com)
+🔗 **Live site:** [pdeoncology.com](https://pdeoncology.com)  
+🌐 **Public outreach:** [PDEOutreach](https://sym19.github.io/pdeoutreach) — cancer science for everyone
 
 ---
 
@@ -15,11 +16,11 @@ A browser-based platform for simulating tumor drug penetration using **reaction-
 
 Drug resistance and treatment failure in solid tumors are often not purely pharmacological — they are **physical**. Even potent drugs can fail to reach the tumor core due to:
 
-- Elevated interstitial fluid pressure (IFP)
-- Dense extracellular matrix (ECM)
-- Poor vascularisation
+- Elevated interstitial fluid pressure (IFP) / 升高的间质液压
+- Dense extracellular matrix (ECM) / 致密的细胞外基质
+- Poor vascularisation / 血管分布不良
 
-PDEOncology provides an interactive simulation environment to visualise these phenomena, enabling researchers and educators to explore how molecular weight, metabolic stability, and receptor expression shape drug distribution — without requiring a computational background.
+PDEOncology provides an interactive simulation environment to visualise these phenomena. Users can explore how molecular weight, metabolic stability, and receptor expression shape drug distribution — without requiring a computational background.
 
 ---
 
@@ -31,55 +32,30 @@ Drug concentration C(x,y,t) evolves according to the **reaction-diffusion equati
 ∂C/∂t = ∇·(D(x,y)∇C) − λC − k·ρ(x,y)·C
 ```
 
-| Symbol | Meaning | Typical range |
-|--------|---------|---------------|
+| Symbol | Meaning | Range |
+|--------|---------|-------|
 | `D(x,y)` | Spatially-varying diffusion coefficient | 0.005 – 0.25 |
-| `λ` | Drug degradation / metabolic clearance rate | 0.001 – 0.05 |
+| `λ` | Drug degradation / metabolic clearance | 0.001 – 0.05 |
 | `k` | Cellular uptake rate | 0.01 – 0.15 |
 | `ρ(x,y)` | Cell density field (radially graded) | 0.05 – 1.0 |
 | `r` | Tumor radius in grid units | 10 – 38 px |
 
-**Numerical method:** Explicit finite difference (FTCS scheme) on a uniform 80×80 grid, representing a 1 cm × 1 cm tissue cross-section. Stability enforced via CFL condition: `dt ≤ dx² / (4D)`.
+**Numerical method:** Explicit finite difference (FTCS) on an 80×80 grid. CFL stability condition: `dt ≤ dx² / (4D)`.
 
 ---
 
 ## Features
 
-### Simulation
-- Real-time PDE solver running entirely in the browser
-- Magma colormap heatmap with tumor boundary overlay
-- Radial penetration curve with gradient rendering
-- 4 key metrics: tumor average concentration, peak C, penetration depth, coverage %
-- 3 delivery modes: IV infusion, vascular ring, intratumoral injection
-
-### Diffusion Animation
-- 20-frame animation player showing drug spread over time
-- Play / Pause / Step / Scrub controls
-- Adjustable playback speed (1× – 10×)
-
-### AI Drug Input
-- Describe a drug + tumor in plain English
-- Claude API extracts biophysically grounded PDE parameters (D, λ, k)
-- Automatic fallback to local database when no API key provided
-
-### Compare Mode
-- Simulate two drugs on the same tumor simultaneously
-- Side-by-side heatmaps with individual metrics
-- Overlay penetration curves (Drug A vs Drug B)
-- Auto-generated comparison summary
-- Export: CSV data, heatmap PNGs, curve PNG
-
-### Drug Database
-- 21 built-in drug × tumor combinations
-- Covers: Doxorubicin, Paclitaxel, Cisplatin, Gemcitabine, Trastuzumab, 5-Fluorouracil, Temozolomide, Dacarbazine
-- Tumor types: breast, pancreatic, glioma, melanoma, colorectal
-- Searchable and filterable
-
-### Results & Export
-- Auto-generated report summary
-- Export radial curve data as CSV
-- Export concentration heatmap as PNG
-- Print report
+| Feature | Description |
+|---------|-------------|
+| **PDE Simulation** | Real-time FDM solver, magma heatmap, radial penetration curve, 4 metrics |
+| **Diffusion Animation** | 20-frame playback with Play/Pause/Scrub/Speed controls |
+| **AI Drug Input** | Claude API extracts D, λ, k from plain English. Local DB fallback when offline |
+| **Compare Mode** | Two drugs on same tumor — side-by-side heatmaps, overlay curves, auto summary |
+| **Drug Database** | 21 drug × tumor combinations, searchable and filterable |
+| **Results & Export** | Auto-generated report, CSV export, PNG export, print |
+| **Bilingual** | Full Chinese/English language toggle (中英双语) |
+| **3 Delivery modes** | IV infusion / vascular ring / intratumoral injection |
 
 ---
 
@@ -87,16 +63,16 @@ Drug concentration C(x,y,t) evolves according to the **reaction-diffusion equati
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | Vanilla HTML / CSS / JavaScript |
+| Frontend | Vanilla HTML / CSS / JavaScript — single `index.html` |
 | Fonts | Space Mono + Inter (Google Fonts) |
-| PDE solver | Custom FTCS finite difference (JS) |
+| PDE solver | Custom FTCS finite difference (pure JS) |
 | Visualisation | HTML5 Canvas API |
-| AI integration | Anthropic Claude API (claude-sonnet) |
+| AI integration | Anthropic Claude API (`claude-sonnet-4`) |
 | CORS proxy | Cloudflare Workers (free tier) |
 | Hosting | GitHub Pages |
-| Domain | pdeoncology.com (IONOS) |
+| Domain | pdeoncology.com |
 
-No frameworks. No build tools. One single `index.html` file.
+No frameworks. No build tools. No server. One file.
 
 ---
 
@@ -104,12 +80,12 @@ No frameworks. No build tools. One single `index.html` file.
 
 ```
 tumor-drug-penetration-model/
-├── index.html          # Entire application (HTML + CSS + JS)
-├── CNAME               # Custom domain config for GitHub Pages
+├── index.html          # Entire application (HTML + CSS + JS, bilingual)
+├── CNAME               # Custom domain config
 ├── README.md           # This file
-├── requirements.txt    # Python dependencies (for Colab notebook)
-├── Tumor_Drug_Simulation_Core.ipynb   # Original Colab prototype
-└── Drug_Diffusion_Model_test01.ipynb  # Early experiments
+├── LICENSE             # MIT License
+├── requirements.txt    # Python dependencies (Colab notebook)
+└── Tumor_Drug_Simulation_Core.ipynb   # Original Colab prototype
 ```
 
 ---
@@ -118,28 +94,24 @@ tumor-drug-penetration-model/
 
 ### Run locally
 ```bash
-# No build step needed — just open the file
+# No build step — just open in browser
 open index.html
-# or serve with any static server:
+# or serve with Python
 python -m http.server 8000
 ```
 
-Then visit `http://localhost:8000`
-
 ### Deploy to GitHub Pages
 1. Fork this repository
-2. Go to Settings → Pages
-3. Set Source: Deploy from branch → main → / (root)
-4. Your site will be live at `https://yourusername.github.io/tumor-drug-penetration-model`
+2. Settings → Pages → Source: main branch / root
+3. Live at `https://yourusername.github.io/tumor-drug-penetration-model`
 
-### Use AI Drug Input
-1. Get an Anthropic API key from [console.anthropic.com](https://console.anthropic.com)
-2. Set up a CORS proxy (see below) or use the built-in fallback
-3. Enter your key in the AI Drug Input tab
+### Set up AI Drug Input (optional)
+1. Get an API key from [console.anthropic.com](https://console.anthropic.com)
+2. Deploy the Cloudflare Worker below as a CORS proxy
+3. Update the worker URL in `index.html` (search for `workers.dev`)
+4. Enter your key in the AI Drug Input tab
 
-### CORS Proxy Setup (Cloudflare Workers)
-The Claude API cannot be called directly from the browser due to CORS restrictions. Deploy this worker:
-
+### Cloudflare Workers CORS Proxy
 ```javascript
 export default {
   async fetch(request) {
@@ -179,18 +151,32 @@ export default {
 }
 ```
 
-Then update the fetch URL in `index.html` to point to your worker.
+---
+
+## Limitations
+
+PDEOncology is an educational and exploratory tool. Key simplifications:
+
+- Tumor geometry is circular and homogeneous — real tumors are irregular
+- 2D model only — real drug penetration is three-dimensional
+- Static cell density and diffusion fields — in reality these evolve with treatment
+- No convective transport (IFP-driven bulk flow) — diffusion only
+- Normalised dimensionless parameters — not directly comparable to clinical doses
+- FTCS is first-order in time — higher-order methods improve accuracy
+
+> Results are model approximations. Not for clinical decision-making.
 
 ---
 
 ## Version History
 
-| Version | Date | Changes |
-|---------|------|---------|
-| v0.4 | Mar 2026 | 20-frame diffusion animation, Compare tab, favicon, About tab with references and team |
-| v0.3 | Mar 2026 | Full UI overhaul — Space Mono/Inter fonts, dark academic theme, mobile responsive |
-| v0.2 | Mar 2026 | Cloudflare Worker, Claude API integration, AI fallback, drug database (21 entries), export |
-| v0.1 | Mar 2026 | Initial release — PDE solver, heatmap, radial curve, 3 delivery modes |
+| Version | Date | Highlights |
+|---------|------|-----------|
+| **v0.4** | Mar 2026 | 20-frame animation, Compare tab, bilingual CN/EN, favicon, full About tab |
+| v0.3 | Mar 2026 | UI overhaul — Space Mono/Inter, dark academic theme, mobile responsive |
+| v0.2 | Mar 2026 | Cloudflare Worker, Claude API, AI fallback, drug DB (21 entries), export |
+| v0.1 | Mar 2026 | Initial — PDE solver, heatmap, radial curve, 3 delivery modes |
+| v0.5 *(upcoming)* | — | DB expansion (50+ entries), Claude-generated report, parameter sweep |
 
 ---
 
@@ -207,22 +193,26 @@ Then update the fetch URL in `index.html` to point to your worker.
 
 ## Team
 
-**Genius** — Technical Development, Website, UI Engineering  
+**Yumeng S.** — Technical Development, Website Engineering, UI Design, PDE Implementation  
 *NSFZ · IB*
 
-**Baichi** — Research, Chatting, FaceTime  
+Designed and built the full PDEOncology platform — including the finite difference PDE solver, interactive visualisation engine, Claude API integration, bilingual language system, and the complete frontend interface.
+
+**Tracey Y.** — Literature Research, Drug Database, Science Communication, Outreach & Promotion  
 *Wycombe Abbey · UK*
 
-> 祝我们都能去自己想上的学校！ @MIT @Cambridge
+Leads research and content development — curating the drug parameter database from published literature, sourcing biophysical references, and driving outreach across PDEOutreach and social media channels.
+
+> 祝我们都能去自己想上的学校！@MIT @Cambridge
 
 ---
 
-## Disclaimer
+## Related
 
-For research and educational use only. Results are model approximations and should not be used for clinical decision-making.
+- **[PDEOutreach](https://sym19.github.io/pdeoutreach)** — the public-facing companion platform. Cancer science explained for everyone, with interactive quizzes, risk profiles, and real patient stories.
 
 ---
 
 ## License
 
-MIT License — feel free to fork, modify, and build upon this project.
+MIT License — free to use, modify, and build upon. Please cite if used in academic work.
