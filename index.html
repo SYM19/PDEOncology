@@ -195,6 +195,17 @@
     /* Mobile */
     @media(max-width:900px){.grid-2{grid-template-columns:1fr;}}
     @media(max-width:600px){.grid-4{grid-template-columns:1fr 1fr;}main{padding:1rem;}header{padding:0 1rem;}.hero-title{font-size:1.4rem;}}
+    @media(max-width:768px){
+      header{height:auto;flex-wrap:wrap;padding:0.6rem 1rem;}
+      .logo{margin-right:auto;}
+      .header-right{margin-left:0;gap:6px;}
+      .outreach-link{display:none;}
+      .v-badge{display:none;}
+      nav{width:100%;order:3;flex:none;height:auto;border-top:1px solid rgba(99,130,166,.12);margin-top:0.5rem;padding-top:0.4rem;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+      nav::-webkit-scrollbar{display:none;}
+      nav button{padding:6px 14px;font-size:0.72rem;white-space:nowrap;flex-shrink:0;height:34px;}
+      .lang-btn{font-size:0.65rem;padding:3px 7px;}
+    }
 
     /* Lang button */
     .lang-btn{font-family:var(--mono);font-size:.72rem;padding:4px 12px;border:1px solid var(--border2);border-radius:20px;background:transparent;color:var(--text2);cursor:pointer;transition:all .2s;white-space:nowrap;}
