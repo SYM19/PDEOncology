@@ -8,7 +8,7 @@
 A browser-based platform for simulating tumor drug penetration using **reaction-diffusion partial differential equations (PDEs)**. All computation runs client-side in JavaScript — no server, no installation required. Available in English and Chinese (中英双语).
 
 🔗 **Live site:** [pdeoncology.com](https://pdeoncology.com)  
-🌐 **Public outreach:** [PDEOutreach](https://sym19.github.io/pdeoutreach) — cancer science for everyone
+🌐 **Public outreach:** [pdeoutreach.com](https://pdeoutreach.com) — cancer science for everyone
 
 ---
 
