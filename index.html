@@ -142,8 +142,7 @@
     .hero-chip{font-family:var(--mono);font-size:.7rem;padding:4px 12px;border:1px solid var(--border2);border-radius:20px;color:var(--text3);letter-spacing:.04em;}
     footer{border-top:1px solid var(--border);padding:1rem 1.5rem;font-size:.72rem;color:var(--text3);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
     .footer-logo{font-family:var(--mono);color:var(--text2);}
-    .lang-btn{font-family:var(--mono);font-size:.72rem;padding:4px 12px;border:1px solid var(--border2);border-radius:20px;background:transparent;color:var(--text2);cursor:pointer;transition:all .2s;white-space:nowrap;}
-    .lang-btn:hover{border-color:var(--blue);color:var(--blue);}
+    
     .outreach-link{font-family:var(--mono);font-size:.7rem;color:var(--text3);border:1px solid var(--border);border-radius:4px;padding:3px 10px;text-decoration:none;transition:color .2s,border-color .2s;}
     .outreach-link:hover{color:var(--green);border-color:var(--green);}
 
@@ -174,7 +173,7 @@
 
     @media(max-width:900px){.grid-2,.grid-3{grid-template-columns:1fr;}}
     @media(max-width:600px){.grid-4{grid-template-columns:1fr 1fr;}main{padding:1rem;}header{padding:0 1rem;}.hero-title{font-size:1.4rem;}}
-    @media(max-width:768px){header{height:auto;flex-wrap:wrap;padding:0.6rem 1rem;}.logo{margin-right:auto;}.header-right{margin-left:0;gap:6px;}.outreach-link{display:none;}.v-badge{display:none;}nav{width:100%;order:3;flex:none;height:auto;border-top:1px solid rgba(99,130,166,.12);margin-top:0.5rem;padding-top:0.4rem;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}nav::-webkit-scrollbar{display:none;}nav button{padding:6px 14px;font-size:0.72rem;white-space:nowrap;flex-shrink:0;height:34px;}.lang-btn{font-size:0.65rem;padding:3px 7px;}}
+    @media(max-width:768px){header{height:auto;flex-wrap:wrap;padding:0.6rem 1rem;}.logo{margin-right:auto;}.header-right{margin-left:0;gap:6px;}.outreach-link{display:none;}.v-badge{display:none;}nav{width:100%;order:3;flex:none;height:auto;border-top:1px solid rgba(99,130,166,.12);margin-top:0.5rem;padding-top:0.4rem;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}nav::-webkit-scrollbar{display:none;}nav button{padding:6px 14px;font-size:0.72rem;white-space:nowrap;flex-shrink:0;height:34px;}}
   </style>
 </head>
 <body>
@@ -199,7 +198,6 @@
     </nav>
     <div class="header-right">
       <a class="outreach-link" href="https://pdeoutreach.com" target="_blank">PDEOutreach ↗</a>
-      <button class="lang-btn" id="lang-btn" onclick="toggleLang()">切换中文</button>
       <div class="status-dot"></div>
       <span class="v-badge">v0.5</span>
     </div>
@@ -2046,8 +2044,7 @@ function loadFromDB(idx){
 /* =========================================================
    LANGUAGE TOGGLE (minimal version)
    ========================================================= */
-let currentLang='en';
-function toggleLang(){currentLang=currentLang==='en'?'zh':'en';document.getElementById('lang-btn').textContent=currentLang==='zh'?'Switch to English':'切换中文';}
+
 </script>
 </body>
 </html>
