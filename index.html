@@ -7,6 +7,12 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23080c12'/><circle cx='16' cy='16' r='9' fill='none' stroke='%234d9eff' stroke-width='1.5' stroke-dasharray='3 2'/><circle cx='16' cy='16' r='4' fill='%233de383' opacity='.9'/><circle cx='16' cy='16' r='1.5' fill='%2300e5ff'/></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <!-- Privacy-friendly analytics by Plausible -->
+  <script async src="https://plausible.io/js/pa-hWl1_ywZ_4tGBpreAp7zj.js"></script>
+  <script>
+    window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
+    plausible.init()
+  </script>
   <style>
     :root {
       --bg:#080c12;--bg1:#0d1117;--bg2:#111820;--bg3:#161d27;
@@ -172,8 +178,35 @@
     .code-box{background:#030507;border:1px solid var(--border);border-radius:var(--radius);padding:1rem;font-family:var(--mono);font-size:.72rem;color:#b8d4ff;line-height:1.8;overflow-x:auto;white-space:pre;max-height:360px;overflow-y:auto;}
 
     @media(max-width:900px){.grid-2,.grid-3{grid-template-columns:1fr;}}
-    @media(max-width:600px){.grid-4{grid-template-columns:1fr 1fr;}main{padding:1rem;}header{padding:0 1rem;}.hero-title{font-size:1.4rem;}}
-    @media(max-width:768px){header{height:auto;flex-wrap:wrap;padding:0.6rem 1rem;}.logo{margin-right:auto;}.header-right{margin-left:0;gap:6px;}.outreach-link{display:none;}.v-badge{display:none;}nav{width:100%;order:3;flex:none;height:auto;border-top:1px solid rgba(99,130,166,.12);margin-top:0.5rem;padding-top:0.4rem;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}nav::-webkit-scrollbar{display:none;}nav button{padding:6px 14px;font-size:0.72rem;white-space:nowrap;flex-shrink:0;height:34px;}}
+    @media(max-width:600px){
+      .grid-4{grid-template-columns:1fr 1fr;}
+      .grid-5{grid-template-columns:1fr 1fr;}
+      main{padding:1rem;}
+      header{padding:0 1rem;}
+      .hero-title{font-size:1.4rem;}
+      .formula-box{font-size:.72rem;padding:.75rem 1rem;overflow-x:auto;white-space:nowrap;}
+      .slider-name{width:90px;font-size:.68rem;}
+      .slider-val{width:44px;font-size:.7rem;}
+      .canvas-box{width:100%;}
+      .metric-value{font-size:1.1rem;}
+      .btn{padding:7px 14px;font-size:.78rem;}
+      .code-box{font-size:.65rem;}
+      .hero{padding:1.5rem 0 1rem;}
+      .card{padding:1rem;}
+      footer{flex-direction:column;align-items:flex-start;gap:6px;}
+      /* flex children with min-width: stack vertically on mobile */
+      [style*="min-width:240px"],[style*="min-width:300px"]{min-width:0!important;width:100%!important;flex:1 1 100%!important;}
+    }
+    @media(max-width:768px){
+      header{height:auto;flex-wrap:wrap;padding:0.6rem 1rem;}
+      .logo{margin-right:auto;}
+      .header-right{margin-left:0;gap:6px;}
+      .outreach-link{display:none;}
+      .v-badge{display:none;}
+      nav{width:100%;order:3;flex:none;height:auto;border-top:1px solid rgba(99,130,166,.12);margin-top:0.5rem;padding-top:0.4rem;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+      nav::-webkit-scrollbar{display:none;}
+      nav button{padding:6px 14px;font-size:0.72rem;white-space:nowrap;flex-shrink:0;height:34px;}
+    }
   </style>
 </head>
 <body>
