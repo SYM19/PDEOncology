@@ -203,7 +203,6 @@ Designed and built the full PDEOncology platform — including the finite differ
 
 Leads research and content development — curating the drug parameter database from published literature, sourcing biophysical references, and driving outreach across PDEOutreach and social media channels.
 
-> 祝我们都能去自己想上的学校！@MIT @Cambridge
 
 ---
 
