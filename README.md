@@ -191,14 +191,12 @@ PDEOncology is an educational and research-facilitating tool. Key simplification
 
 ## Team
 
-**Y. Shi**
-Full-Stack Engineer & Systems Architect
-• Systems Architecture: Engineered the end-to-end technical infrastructure, including server-side logic, hosting, and API integrations.
+**Y. Shi** - Full-Stack Engineer & Systems Architect
+- Systems Architecture: Engineered the end-to-end technical infrastructure, including server-side logic, hosting, and API integrations.
 • UI/UX Engineering: Designed and implemented high-performance, interactive frontends focused on complex data visualization and user accessibility.
 • Technical Coordination: Managed the deployment pipeline and cross-platform localization to ensure a seamless public-facing interface.
 
-**T. Yang**
-Scientific Lead & Computational Biologist
+**T. Yang** - Scientific Lead & Computational Biologist
 • Biophysical Modelling: Developed the core PDE solvers and mathematical frameworks for simulating complex reaction-diffusion-convection systems.
 • Data Science & Validation: Built robust parameter-sweep frameworks and conversion pipelines to validate theoretical models against experimental and clinical data.
 • Research Leadership: Curated comprehensive biophysical databases and led the translation of high-level research into structured, open-source documentation.
