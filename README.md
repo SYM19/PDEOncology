@@ -20,9 +20,13 @@ Drug resistance and treatment failure in solid tumors are often not purely pharm
 
 - Elevated interstitial fluid pressure (IFP) 
 - Dense extracellular matrix (ECM) 
-- Poor vascularisation 
+- Poor vascularisation
 
-PDEOncology provides an interactive simulation environment to visualise the effect of cancer drugs on 2D-modelled tumours. Users can explore how molecular weight, metabolic stability, and receptor expression shape drug distribution with adjustable parameters.
+**PDEOncology** provides an interactive simulation environment to visualize drug-tumor interactions. Key features include:
+
+- **Dynamic Modeling**: Simulate the effect of cancer drugs on 2D-modeled tumors.
+- **Parameter Exploration**: Adjust molecular weight, metabolic stability, and receptor expression.
+- **Visual Analysis**: Observe how biophysical barriers shape drug distribution in real-time.
 ---
 
 ## The PDE Model
@@ -40,7 +44,7 @@ Drug concentration C(x,y,t) evolves according to the **reaction-diffusion equati
 | `k` | Cellular uptake rate | 0.01 – 0.15 |
 | `ρ(x,y)` | Cell density field (radially graded) | 0.05 – 1.0 |
 | `r` | Tumor radius in grid units | 10 – 38 px |
-| v₀ | IFP-driven convection velocity magnitude | 0.00–0.15 | Scaled from 5–30 mmHg (Darcy’s law) | Jain (1987), Stylianopoulos (2012) |
+| `v₀` | IFP-driven convection velocity magnitude | 0.00–0.15 | Scaled from 5–30 mmHg (Darcy’s law) | Jain (1987), Stylianopoulos (2012) |
 
 **Numerical method:** Explicit finite difference (FTCS) on an 80×80 grid. CFL stability condition: `dt ≤ dx² / (4D)`.
 
@@ -174,7 +178,6 @@ PDEOncology is a research-facilitating tool with deliberate simplifications for 
 | v0.3 | Mar 2026 | UI overhaul — Space Mono/Inter, dark academic theme, mobile responsive |
 | v0.2 | Mar 2026 | Cloudflare Worker, Claude API, AI fallback, drug DB (21 entries), export |
 | v0.1 | Mar 2026 | Initial — PDE solver, heatmap, radial curve, 3 delivery modes |
-| v0.5 *(upcoming)* | — | DB expansion (50+ entries), Claude-generated report, parameter sweep |
 
 ---
 
@@ -191,11 +194,18 @@ PDEOncology is a research-facilitating tool with deliberate simplifications for 
 
 ## Team
 
-**Yumeng Shi** — Technical Lead & Systems Architect Focus: Infrastructure, PDE Implementation, and Interactive Design
+**Yumeng Shi** — Technical Lead & Systems Architect
+
+Focus: Infrastructure, PDE Implementation, and Interactive Design
+
 Responsible for the project’s computational backbone and digital ecosystem. Yumeng engineered the core numerical solvers, developed the end-to-end frontend architecture, and managed the deployment of the integrated PDE platform and outreach sites.
 
-**Tracey Yang** — Scientific Lead & Biophysical Modeller Focus: Mathematical Physics, Data Validation, and Research
-Leads the biophysical integrity of the platform. Tracey developed the advanced convection-diffusion frameworks, engineered the data conversion pipelines for clinical imaging (MRI/Histology), and established the project’s grounding through literature-based parameter synthesis and experimental validation.
+
+**Tracey Yang** — Scientific Lead & Biophysical Modeller
+
+Focus: Computational Research, Data Validation, and Model Grounding
+
+Directs the biophysical integrity of the platform. Tracey oversaw the development of the convection-diffusion frameworks, engineered the data conversion pipelines for clinical imaging (MRI/Histology), and established the project’s grounding through literature-based parameter synthesis and experimental validation.
 
 ---
 
@@ -205,13 +215,6 @@ Leads the biophysical integrity of the platform. Tracey developed the advanced c
 
 ---
 
-@misc{pdeoncology2026,
-  author = {Yang, T. and Shi, Y.},
-  title = {PDEOncology: Tumor Drug Penetration Simulator},
-  year = {2026},
-  howpublished = {\url{https://pdeoncology.com}},
-  note = {GitHub: SYM19/PDEOncology}
-}
 
 ## License
 
