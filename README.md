@@ -59,7 +59,7 @@ Drug concentration C(x,y,t) evolves according to the **reaction-diffusion equati
 | **AI Drug Input** | Claude API extracts D, λ, k from plain English. Local DB fallback when offline |
 | **Compare Mode** | Two drugs on same tumor — side-by-side heatmaps, overlay curves, auto summary |
 | **Drug Database** | 21 drug × tumor combinations, searchable and filterable |
-| **Results & Export** | Auto-generated report, CSV export, PNG export, print |
+| **Results & Export** | Auto-generated report, CSV/LaTex/Python/PhysiCell export, heatmap PNG export, print |
 | **3 Delivery modes** | IV infusion / vascular ring / intratumoral injection |
 
 ---
