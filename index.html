@@ -365,6 +365,16 @@
         <p style="max-width:680px;font-size:.95rem;">A browser-based platform for simulating tumor drug penetration using reaction-diffusion-convection PDEs. Extended in v0.5 with IFP convection transport, experimental validation against published spheroid data, and parameter sweep analysis.</p>
         <div class="formula-box">∂C/∂t = ∇·(D(x,y)∇C) − <span style="color:var(--amber)">v·∇C</span> − λC − k·ρ(x,y)·C</div>
         <p style="font-size:.8rem;color:var(--text3);">New in v0.5: convection term <code style="color:var(--amber);">v·∇C</code> from IFP-driven interstitial flow (Jain 1987, Darcy's law approximation). <a href="#" onclick="switchTab('validation');return false;">Validated against Thurber et al. 2008 →</a></p>
+        <div class="card" style="margin-top:1rem;">
+          <h3>Research Use Cases</h3>
+          <ul style="font-size:0.85rem;line-height:1.6;">
+            <li>Rapid sensitivity analysis before animal experiments</li>
+            <li>Virtual screening of molecular modifications (D vs k sweeps)</li>
+            <li>Patient-specific testing via histology/MRI upload</li>
+            <li>Export to PhysiCell or Python for 3-D follow-up</li>
+            <li>Manuscript-ready methods & figures (LaTeX + SVG)</li>
+          </ul>
+        </div>
         <div class="hero-chips">
           <span class="hero-chip">FDM · FTCS + upwind</span>
           <span class="hero-chip">80 × 80 grid</span>
