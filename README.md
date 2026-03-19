@@ -5,10 +5,12 @@
 [![License](https://img.shields.io/badge/license-MIT-f0a54a?style=flat-square)](LICENSE)
 [![PDEOutreach](https://img.shields.io/badge/outreach-PDEOutreach-a78bfa?style=flat-square)](https://sym19.github.io/pdeoutreach)
 
-A browser-based platform for simulating tumor drug penetration using **reaction-diffusion partial differential equations (PDEs)**. All computation runs client-side in JavaScript — no server, no installation required.
+PDEOncology is an open-source research platform that simulates tumour drug penetration using reaction-diffusion-convection PDEs. It enables computational oncologists, bioengineers and pharmacologists to test physical barriers (IFP, stroma, vascularisation) in seconds — no installation required.
+
+**Research-facilitating tool** • Validated against published spheroid data • Exports for Python/PhysiCell • Patient-specific imaging support
 
 🔗 **Live site:** [pdeoncology.com](https://pdeoncology.com)  
-🌐 **Public outreach:** [pdeoutreach.com](https://pdeoutreach.com) — oncology for everyone (education purpose only) 
+🌐 **Companion public outreach site:** [pdeoutreach.com](https://pdeoutreach.com) 
 
 ---
 
@@ -20,7 +22,7 @@ Drug resistance and treatment failure in solid tumors are often not purely pharm
 - Dense extracellular matrix (ECM) 
 - Poor vascularisation 
 
-PDEOncology provides an interactive simulation environment to visualise the effect of cancer drugs on 2D-modelled tumours. Users can explore how molecular weight, metabolic stability, and receptor expression shape drug distribution with parameters adjusted.
+PDEOncology provides an interactive simulation environment to visualise the effect of cancer drugs on 2D-modelled tumours. Users can explore how molecular weight, metabolic stability, and receptor expression shape drug distribution with adjustable parameters.
 ---
 
 ## The PDE Model
@@ -28,7 +30,7 @@ PDEOncology provides an interactive simulation environment to visualise the effe
 Drug concentration C(x,y,t) evolves according to the **reaction-diffusion equation**:
 
 ```
-∂C/∂t = ∇·(D(x,y)∇C) − λC − k·ρ(x,y)·C
+∂C/∂t = ∇·(D(x,y)∇C) − v·∇C − λC − k·ρ(x,y)·C
 ```
 
 | Symbol | Meaning | Range |
@@ -38,6 +40,7 @@ Drug concentration C(x,y,t) evolves according to the **reaction-diffusion equati
 | `k` | Cellular uptake rate | 0.01 – 0.15 |
 | `ρ(x,y)` | Cell density field (radially graded) | 0.05 – 1.0 |
 | `r` | Tumor radius in grid units | 10 – 38 px |
+| v₀ | IFP-driven convection velocity magnitude | 0.00–0.15 | Scaled from 5–30 mmHg (Darcy’s law) | Jain (1987), Stylianopoulos (2012) |
 
 **Numerical method:** Explicit finite difference (FTCS) on an 80×80 grid. CFL stability condition: `dt ≤ dx² / (4D)`.
 
@@ -153,16 +156,12 @@ export default {
 
 ## Limitations
 
-PDEOncology is an educational and research-facilitating tool. Key simplifications:
-
-- Tumor geometry is circular and homogeneous — real tumors are irregular
-- 2D model only — real drug penetration is three-dimensional
-- Static cell density and diffusion fields — in reality these evolve with treatment
-- No convective transport (IFP-driven bulk flow) — diffusion only
-- Normalised dimensionless parameters — not directly comparable to clinical doses
-- FTCS is first-order in time — higher-order methods improve accuracy
-
-> Results are model approximations. Not for clinical decision-making.
+PDEOncology is a research-facilitating tool with deliberate simplifications for speed and accessibility:
+• 2D cross-section only (real tumours are 3-D)
+• Static geometry and fields (no dynamic remodelling)
+• Normalised parameters (not absolute clinical doses)
+• FTCS + upwind scheme (first-order accurate)
+• Histology upload uses simple thresholding (expert manual segmentation recommended for clinical data)
 
 ---
 
@@ -170,7 +169,8 @@ PDEOncology is an educational and research-facilitating tool. Key simplification
 
 | Version | Date | Highlights |
 |---------|------|-----------|
-| **v0.4** | Mar 2026 | 20-frame animation, Compare tab, bilingual CN/EN, favicon, full About tab |
+| v0.5 | March 2026 | IFP convection (Darcy’s law), experimental validation (RMSE < 0.08 vs Thurber et al.), histology/MRI upload, parameter sweep, Python/LaTeX export, full units & DOI links |
+| v0.4 | Mar 2026 | 20-frame animation, Compare tab, bilingual CN/EN, favicon, full About tab |
 | v0.3 | Mar 2026 | UI overhaul — Space Mono/Inter, dark academic theme, mobile responsive |
 | v0.2 | Mar 2026 | Cloudflare Worker, Claude API, AI fallback, drug DB (21 entries), export |
 | v0.1 | Mar 2026 | Initial — PDE solver, heatmap, radial curve, 3 delivery modes |
@@ -180,27 +180,22 @@ PDEOncology is an educational and research-facilitating tool. Key simplification
 
 ## References
 
-1. Jain RK. Transport of molecules in the tumor interstitium. *Cancer Research*, 47(12):3039–3051, 1987.
-2. Nugent LJ, Jain RK. Extravascular diffusion in normal and neoplastic tissues. *Cancer Research*, 44(1):238–244, 1984.
-3. Thurber GM, Schmidt MM, Wittrup KD. Antibody tumor penetration. *Advanced Drug Delivery Reviews*, 60(12):1421–1434, 2008.
-4. Chauhan VP et al. Delivery of molecular and nanoscale medicine to tumors. *Annual Review of Chemical and Biomolecular Engineering*, 2:281–298, 2011.
-5. Tannock IF et al. Limited penetration of anticancer drugs through tumor tissue. *Clinical Cancer Research*, 8(3):878–884, 2002.
-6. Minchinton AI, Tannock IF. Drug penetration in solid tumours. *Nature Reviews Cancer*, 6(8):583–592, 2006.
+1. [Jain RK. Transport of molecules in the tumor interstitium. *Cancer Research*, 47(12):3039–3051, 1987.](https://pubmed.ncbi.nlm.nih.gov/3555767/)
+2. [Nugent LJ, Jain RK. Extravascular diffusion in normal and neoplastic tissues. *Cancer Research*, 44(1):238–244, 1984.](https://pubmed.ncbi.nlm.nih.gov/6398639/)
+3. [Thurber GM, Schmidt MM, Wittrup KD. Antibody tumor penetration. *Advanced Drug Delivery Reviews*, 60(12):1421–1434, 2008.](https://pubmed.ncbi.nlm.nih.gov/18541331/)
+4. [Chauhan VP et al. Delivery of molecular and nanoscale medicine to tumors. *Annual Review of Chemical and Biomolecular Engineering*, 2:281–298, 2011.](https://pubmed.ncbi.nlm.nih.gov/22432620/)
+5. [Tannock IF et al. Limited penetration of anticancer drugs through tumor tissue. *Clinical Cancer Research*, 8(3):878–884, 2002.](https://pubmed.ncbi.nlm.nih.gov/11895922/)
+6. [Minchinton AI, Tannock IF. Drug penetration in solid tumours. *Nature Reviews Cancer*, 6(8):583–592, 2006.](https://pubmed.ncbi.nlm.nih.gov/16862189/)
 
 ---
 
 ## Team
 
-**Y. Shi** - Full-Stack Engineer & Systems Architect
-- Systems Architecture: Engineered the end-to-end technical infrastructure, including server-side logic, hosting, and API integrations.
-• UI/UX Engineering: Designed and implemented high-performance, interactive frontends focused on complex data visualization and user accessibility.
-• Technical Coordination: Managed the deployment pipeline and cross-platform localization to ensure a seamless public-facing interface.
+**Yumeng Shi** — Technical Lead & Systems Architect Focus: Infrastructure, PDE Implementation, and Interactive Design
+Responsible for the project’s computational backbone and digital ecosystem. Yumeng engineered the core numerical solvers, developed the end-to-end frontend architecture, and managed the deployment of the integrated PDE platform and outreach sites.
 
-**T. Yang** - Scientific Lead & Computational Biologist
-• Biophysical Modelling: Developed the core PDE solvers and mathematical frameworks for simulating complex reaction-diffusion-convection systems.
-• Data Science & Validation: Built robust parameter-sweep frameworks and conversion pipelines to validate theoretical models against experimental and clinical data.
-• Research Leadership: Curated comprehensive biophysical databases and led the translation of high-level research into structured, open-source documentation.
-
+**Tracey Yang** — Scientific Lead & Biophysical Modeller Focus: Mathematical Physics, Data Validation, and Research
+Leads the biophysical integrity of the platform. Tracey developed the advanced convection-diffusion frameworks, engineered the data conversion pipelines for clinical imaging (MRI/Histology), and established the project’s grounding through literature-based parameter synthesis and experimental validation.
 
 ---
 
@@ -209,6 +204,14 @@ PDEOncology is an educational and research-facilitating tool. Key simplification
 - **[PDEOutreach](https://pdeoutreach.com)** — the public-facing companion platform. Cancer science explained for everyone, with interactive quizzes, risk profiles, and real patient stories.
 
 ---
+
+@misc{pdeoncology2026,
+  author = {Yang, T. and Shi, Y.},
+  title = {PDEOncology: Tumor Drug Penetration Simulator},
+  year = {2026},
+  howpublished = {\url{https://pdeoncology.com}},
+  note = {GitHub: SYM19/PDEOncology}
+}
 
 ## License
 
