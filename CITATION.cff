@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Yang
+    given-names: Zichen Tracey 
+  - family-names: Shi
+    given-names: Yumeng 
+title: "PDEOncology: Tumor Drug Penetration Simulator"
+version: 0.5
+date-released: 2026-03-20
+url: "https://pdeoncology.com"
