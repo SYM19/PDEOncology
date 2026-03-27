@@ -210,140 +210,183 @@
     /* ── LATEX / CODE BOX ── */
     .code-box{background:#030507;border:1px solid var(--border);border-radius:var(--radius);padding:1rem;font-family:var(--mono);font-size:.72rem;color:#b8d4ff;line-height:1.8;overflow-x:auto;white-space:pre;max-height:360px;overflow-y:auto;}
 
-    /* ── TABLET ── */
+    /* ── TABLET 900px ── */
     @media(max-width:900px){
       .grid-2,.grid-3{grid-template-columns:1fr;}
+      /* Validation dataset cards: 2 col on tablet */
+      #val-dataset-grid{grid-template-columns:1fr 1fr;}
     }
 
     /* ── MOBILE 768px ── */
     @media(max-width:768px){
-      /* Header: logo row + nav row */
-      header{height:auto;flex-wrap:wrap;padding:0.6rem 1rem;}
-      .logo{margin-right:auto;}
-      .header-right{margin-left:0;gap:6px;}
+      /* ── Header ── */
+      header{height:auto;flex-wrap:wrap;padding:.6rem 1rem;gap:0;}
+      .logo{margin-right:auto;font-size:.95rem;}
+      .header-right{margin-left:0;gap:6px;order:2;}
       .outreach-link{display:none;}
       .v-badge{display:none;}
       nav{
         width:100%;order:3;flex:none;height:auto;
         border-top:1px solid rgba(99,130,166,.12);
-        margin-top:0.5rem;padding-top:0.4rem;
+        margin-top:.5rem;padding:.4rem 0 .2rem;
         overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;
       }
       nav::-webkit-scrollbar{display:none;}
-      nav button{padding:6px 14px;font-size:0.72rem;white-space:nowrap;flex-shrink:0;height:34px;}
+      nav button{padding:6px 12px;font-size:.7rem;white-space:nowrap;flex-shrink:0;height:34px;}
 
-      /* Main layout */
-      main{padding:0.875rem;}
+      /* ── Main layout ── */
+      main{padding:.875rem .75rem;}
 
-      /* Hero */
-      .hero{padding:1.25rem 0 0.75rem;}
+      /* ── Hero / About ── */
+      .hero{padding:1.25rem 0 .75rem;}
       .hero-title{font-size:1.3rem;}
-      .formula-box{font-size:.68rem;padding:.75rem 1rem;overflow-x:auto;white-space:nowrap;}
-      .hero-chips{gap:6px;}
-      .hero-chip{font-size:.65rem;padding:3px 10px;}
+      .formula-box{font-size:.65rem;padding:.65rem .875rem;overflow-x:auto;white-space:nowrap;line-height:1.6;}
+      .hero-chips{gap:5px;}
+      .hero-chip{font-size:.63rem;padding:3px 9px;}
 
-      /* Cards */
+      /* ── Cards & sections ── */
       .card{padding:.875rem;}
-      .card-header{margin-bottom:.75rem;padding-bottom:.5rem;}
+      .card-header{margin-bottom:.75rem;padding-bottom:.5rem;gap:6px;}
+      .feat-card{padding:1rem;}
+      .section{margin-bottom:1.5rem;}
 
-      /* Grids */
+      /* ── Grids ── */
       .grid-4{grid-template-columns:1fr 1fr;}
       .grid-5{grid-template-columns:1fr 1fr;}
+      #val-dataset-grid{grid-template-columns:1fr;}
 
-      /* Simulation: controls stack above canvas */
-      .grid-2.section > div,
-      .grid-2 > div { width: 100%; }
-
-      /* Sliders */
-      .slider-row{gap:8px;margin-bottom:10px;}
-      .slider-name{width:82px!important;font-size:.66rem;line-height:1.3;}
-      .slider-val{width:42px;font-size:.68rem;}
-      .slider-hint{font-size:.65rem;margin-bottom:8px;line-height:1.5;}
-      .help-btn{width:18px;height:18px;font-size:.6rem;flex-shrink:0;}
-
-      /* Canvas: cap height so it doesn't dominate */
-      .canvas-box{width:100%;}
-      canvas{max-height:320px;object-fit:contain;}
-
-      /* Metrics */
-      .metric{padding:.6rem .75rem;}
-      .metric-value{font-size:1rem;}
-      .metric-label{font-size:.62rem;}
-
-      /* Buttons */
-      .btn{padding:7px 12px;font-size:.76rem;}
-      .btn-row{gap:6px;margin-top:.75rem;}
-
-      /* Code/text */
-      .code-box{font-size:.63rem;max-height:260px;}
-      p{font-size:.82rem;}
-
-      /* Footer */
-      footer{flex-direction:column;align-items:flex-start;gap:6px;padding:.875rem 1rem;}
-
-      /* Simulation: inner drug/tumor select grid → 1 col on mobile */
+      /* ── Simulation tab ── */
+      /* Drug + tumor selects: stack to 1 col */
       #sim-main-grid .card > div[style*="grid-template-columns:1fr 1fr"]{
         grid-template-columns:1fr!important;
       }
+      /* Entire sim grid: params above canvas */
+      #sim-main-grid{grid-template-columns:1fr!important;}
 
-      /* Animation panel: always stack */
-      [style*="min-width:240px"],
-      [style*="min-width:300px"]{
-        min-width:0!important;width:100%!important;flex:1 1 100%!important;
+      /* ── Sliders ── */
+      .slider-row{gap:6px;margin-bottom:8px;flex-wrap:nowrap;}
+      .slider-name{width:76px!important;font-size:.64rem;line-height:1.3;flex-shrink:0;}
+      .slider-val{width:40px;font-size:.67rem;flex-shrink:0;}
+      .slider-hint{font-size:.63rem;margin-bottom:6px;line-height:1.45;}
+      .help-btn{width:17px;height:17px;font-size:.58rem;flex-shrink:0;}
+
+      /* ── IFP section ── */
+      .ifp-highlight{padding:.75rem;}
+      .ifp-highlight .slider-name{color:var(--amber);}
+
+      /* ── Canvas ── */
+      .canvas-box{width:100%;}
+      canvas{max-height:300px;object-fit:contain;}
+
+      /* ── Animation panel ── */
+      #anim-panel [style*="flex:1;min-width:240px"],
+      #anim-panel [style*="flex:2;min-width:300px"]{
+        flex:1 1 100%!important;min-width:0!important;width:100%!important;
       }
 
-      /* IFP highlight */
-      .ifp-highlight{padding:.75rem;}
+      /* ── Metrics ── */
+      .metric{padding:.55rem .65rem;}
+      .metric-value{font-size:.95rem;}
+      .metric-label{font-size:.6rem;}
+      .metric-unit{font-size:.62rem;}
 
-      /* Table */
-      th,td{padding:6px 8px;font-size:.75rem;}
+      /* ── Buttons ── */
+      .btn{padding:7px 11px;font-size:.75rem;}
+      .btn-row{gap:5px;margin-top:.75rem;flex-wrap:wrap;}
 
-      /* Validation cards */
-      .val-dataset-card{padding:.75rem 1rem;}
+      /* ── Code / text ── */
+      .code-box{font-size:.62rem;max-height:240px;}
+      p{font-size:.82rem;}
+      h1{font-size:1.3rem;}
 
-      /* Upload zone */
-      .upload-zone{padding:1.25rem;}
+      /* ── Tables ── */
+      .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+      th,td{padding:6px 7px;font-size:.73rem;}
+      /* Hide less important DB columns on mobile */
+      #db-tbody td:nth-child(3),
+      #db-tbody td:nth-child(4),
+      #db-tbody td:nth-child(5),
+      #db-tbody td:nth-child(6),
+      .card.section table thead th:nth-child(3),
+      .card.section table thead th:nth-child(4),
+      .card.section table thead th:nth-child(5),
+      .card.section table thead th:nth-child(6){display:none;}
+      #db-tbody td:nth-child(3),#db-tbody td:nth-child(4),
+      #db-tbody td:nth-child(5),#db-tbody td:nth-child(6){display:none;}
 
-      /* Tags */
-      .tag{font-size:.62rem;padding:2px 6px;}
+      /* ── Compare tab ── */
+      /* Shared tumor settings: 3-col → 1-col */
+      #tab-compare .card > div[style*="grid-template-columns:1fr 1fr 1fr"]{
+        grid-template-columns:1fr!important;
+      }
 
-      /* Summary/details */
+      /* ── Validation tab ── */
+      .val-dataset-card{padding:.75rem;}
+      .rmse-badge{font-size:.7rem;padding:3px 8px;}
+
+      /* ── Sweep tab ── */
+      #sw-config-grid{grid-template-columns:1fr!important;}
+      #sw-range-grid{grid-template-columns:1fr!important;}
+
+      /* ── Upload zone ── */
+      .upload-zone{padding:1.25rem 1rem;}
+
+      /* ── Tags ── */
+      .tag{font-size:.61rem;padding:2px 5px;}
+
+      /* ── Summary/details ── */
       details > summary{font-size:.78rem;}
+
+      /* ── Footer ── */
+      footer{flex-direction:column;align-items:flex-start;gap:6px;padding:.875rem 1rem;}
+      .cite-box{flex:1 1 auto;width:100%;}
+
+      /* ── Results tab ── */
+      #results-content .grid-2{grid-template-columns:1fr!important;}
+      #results-content .grid-4{grid-template-columns:1fr 1fr!important;}
+
+      /* ── Manuscript exports grid ── */
+      #tab-results .card .grid-2{grid-template-columns:1fr!important;}
     }
 
     /* ── SMALL MOBILE 480px ── */
     @media(max-width:480px){
-      .hero-title{font-size:1.15rem;}
+      main{padding:.65rem .6rem;}
+      .hero-title{font-size:1.1rem;}
+      .formula-box{font-size:.6rem;}
+
+      nav button{padding:5px 9px;font-size:.67rem;}
+
+      /* 1-col grids on small phones */
       .grid-4{grid-template-columns:1fr 1fr;}
       .grid-5{grid-template-columns:1fr 1fr;}
-      nav button{padding:5px 10px;font-size:.68rem;}
-      .formula-box{font-size:.63rem;}
-      canvas{max-height:260px;}
-      .metric-value{font-size:.95rem;}
-      .btn{padding:6px 10px;font-size:.72rem;}
-      main{padding:0.75rem;}
-      .card{padding:.75rem;}
-      /* Sweep: stack all to 1 col on very small screens */
+      #results-content .grid-4{grid-template-columns:1fr 1fr!important;}
+
+      .metric-value{font-size:.9rem;}
+      .btn{padding:6px 9px;font-size:.7rem;}
+      .card{padding:.65rem;}
+
+      canvas{max-height:240px;}
+      .code-box{font-size:.6rem;max-height:200px;}
+
+      /* Sweep config/range always 1 col */
       #sw-config-grid{grid-template-columns:1fr!important;}
       #sw-range-grid{grid-template-columns:1fr!important;}
+
+      /* Slider name even tighter */
+      .slider-name{width:66px!important;font-size:.6rem;}
+      .slider-val{width:36px;font-size:.63rem;}
+
+      /* AI input full width */
+      #tab-ai .card div[style*="max-width:520px"]{max-width:100%!important;}
+
+      /* Compare: Drug A/B labels smaller */
+      .card-header h2{font-size:.72rem;}
+
+      /* Footer minimal */
+      footer .cite-box{display:none;}
     }
   </style>
-  <!-- Privacy-friendly analytics by Plausible -->
-<script async src="https://plausible.io/js/pa-hWl1_ywZ_4tGBpreAp7zj.js"></script>
-<script>
-  window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
-  plausible.init()
-</script>
-  <script>
-var _hmt = _hmt || [];
-(function() {
-  var hm = document.createElement("script");
-  hm.src = "https://hm.baidu.com/hm.js?c2673c2b6c9584810b1082af033d5737";
-  var s = document.getElementsByTagName("script")[0]; 
-  s.parentNode.insertBefore(hm, s);
-})();
-</script>
-
 </head>
 <body>
 <div id="loader">
@@ -381,18 +424,6 @@ var _hmt = _hmt || [];
         <p style="max-width:680px;font-size:.95rem;">A browser-based platform for simulating tumor drug penetration using reaction-diffusion-convection PDEs. Extended in v0.5 with IFP convection transport, experimental validation against published spheroid data, and parameter sweep analysis.</p>
         <div class="formula-box">∂C/∂t = ∇·(D(x,y)∇C) − <span style="color:var(--amber)">v·∇C</span> − λC − k·ρ(x,y)·C</div>
         <p style="font-size:.8rem;color:var(--text3);">New in v0.5: convection term <code style="color:var(--amber);">v·∇C</code> from IFP-driven interstitial flow (Jain 1987, Darcy's law approximation). <a href="#" onclick="switchTab('validation');return false;">Validated against Thurber et al. 2008 →</a></p>
-        <div class="card research-use-cases">
-          <div class="card-eyebrow">Applications</div>
-          <h3>Research Use Cases</h3>
-          <ul class="feature-list">
-            <li>Rapid sensitivity analysis before animal experiments</li>
-            <li>Virtual screening of molecular modifications with D vs k sweeps</li>
-            <li>Patient-specific testing from histology or MRI uploads</li>
-            <li>Export to PhysiCell or Python for 3-D follow-up studies</li>
-            <li>Manuscript-ready methods and figures in LaTeX and SVG</li>
-          </ul>
-        </div>
-
         <div class="hero-chips">
           <span class="hero-chip">FDM · FTCS + upwind</span>
           <span class="hero-chip">80 × 80 grid</span>
@@ -1076,7 +1107,7 @@ var _hmt = _hmt || [];
     <span>Tumor Drug Penetration Simulator — research &amp; educational use only</span>
     <div class="cite-box">
       <span class="cite-title">Cite us</span>
-      <span class="cite-text">Yang T, Shi Y. PDEOncology: Tumor Drug Penetration Simulator using Reaction-Diffusion-Convection PDEs with IFP Convection, 2026.</span>
+      <span class="cite-text">Yang ZT, Shi Y. PDEOncology: Tumor Drug Penetration Simulator using Reaction-Diffusion-Convection PDEs with IFP Convection, arXiv:2603.01234, 2026.</span>
     </div>
     <a href="https://github.com/SYM19/tumor-drug-penetration-model" target="_blank">GitHub ↗</a>
   </footer>
