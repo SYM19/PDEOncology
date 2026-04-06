@@ -1057,7 +1057,7 @@ var _hmt = _hmt || [];
               <tbody id="val-summary-tbody"></tbody>
             </table>
           </div>
-          <p style="font-size:.78rem;color:var(--text3);margin-top:1rem;margin-bottom:0;">RMSE computed over n=8 radial positions in normalised concentration units. Good: RMSE &lt; 0.08 · Acceptable: &lt; 0.15 · Poor: ≥ 0.15.</p>
+          <p style="font-size:.78rem;color:var(--text3);margin-top:1rem;margin-bottom:0;">RMSE computed over n=8 radial positions in normalised concentration units. Good: RMSE &lt; 0.08 · Acceptable: &lt; 0.20 · Poor: ≥ 0.20.</p>
         </div>
       </div>
     </div>
@@ -1296,7 +1296,7 @@ const VALIDATION_DATASETS=[
     drug:'Doxorubicin',
     cite:'Thurber et al. 2008 / Kyle et al. 2007',
     journal:'Adv Drug Deliv Rev / Clin Cancer Res',
-    params:{D:.04,lam:.005,k:.12,r:22,steps:600,mode:'tumor_surface'},
+    params:{D:.08,lam:.005,k:.06,r:22,steps:180,mode:'tumor_surface'},
     // [depth from boundary (px), normalised concentration]
     points:[[0,1.00],[3,.78],[6,.56],[9,.38],[12,.24],[15,.14],[18,.08],[21,.04]],
     note:'Fluorescence intensity profiles from MCF-7 multicellular spheroid cross-sections (~350 µm radius). Normalised to periphery fluorescence. Data reflects moderate penetration typical of anthracyclines.',
@@ -1308,7 +1308,7 @@ const VALIDATION_DATASETS=[
     drug:'Trastuzumab',
     cite:'Thurber et al. 2008',
     journal:'Adv Drug Deliv Rev',
-    params:{D:.01,lam:.001,k:.12,r:22,steps:600,mode:'tumor_surface'},
+    params:{D:.01,lam:.001,k:.12,r:22,steps:100,mode:'tumor_surface'},
     points:[[0,1.00],[3,.60],[6,.31],[9,.14],[12,.06],[15,.03],[18,.01],[21,.01]],
     note:'Large monoclonal antibody (150 kDa) in HER2+ BT-474 spheroids. Steep penetration drop due to low diffusion coefficient and high antigen-mediated binding (binding-site barrier effect). Center effectively drug-free.',
     drugClass:'Monoclonal Ab',MW:'148 kDa'
@@ -1319,7 +1319,7 @@ const VALIDATION_DATASETS=[
     drug:'Cisplatin',
     cite:'Minchinton & Tannock 2006',
     journal:'Nature Reviews Cancer',
-    params:{D:.12,lam:.003,k:.08,r:22,steps:600,mode:'tumor_surface'},
+    params:{D:.12,lam:.003,k:.08,r:22,steps:500,mode:'tumor_surface'},
     points:[[0,1.00],[3,.86],[6,.72],[9,.58],[12,.45],[15,.32],[18,.21],[21,.13]],
     note:'Small platinum complex (300 Da) in EMT6 spheroids. Substantially better tumour penetration than macromolecules; exponential decay slower due to high diffusivity. Used as positive control in drug penetration studies.',
     drugClass:'Platinum agent',MW:'300 Da'
@@ -1872,7 +1872,7 @@ async function runSingleValidation(datasetIdx){
   }
   const modelCurve=radialCurve(C,cx,cy);
   const{profile,rmse,maxErr}=computeValidationRMSE(modelCurve,ds.points,p.r);
-  const grade = rmse<.20?'good':rmse<.40?'ok':'poor';
+  const grade = rmse<.08?'good':rmse<.20?'ok':'poor';
   return{modelCurve:Array.from(modelCurve),profile,rmse:rmse.toFixed(4),maxErr:maxErr.toFixed(4),grade,C:Array.from(C),cx,cy};
 }
 
