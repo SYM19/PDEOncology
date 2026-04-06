@@ -2686,8 +2686,12 @@ function renderResults(){
   document.getElementById('r-tumor').textContent=p.tumor;
   document.getElementById('r-tavg').textContent=metrics.tumorAvg;
   document.getElementById('r-depth').textContent=metrics.depth50;
-  drawHeatmap('result-heatmap',C,cx,cy,p.r,500,460);
-  drawCurve('result-curve',curve,p.r,500,460);
+  const _maxR=Math.max(...C);
+  const _CR=_maxR>0&&_maxR<0.05?C.map(v=>v/_maxR):C;
+  drawHeatmap('result-heatmap',_CR,cx,cy,p.r,500,460);
+  const _maxCurve=Math.max(...curve);
+  const _curveR=_maxCurve>0&&_maxCurve<0.05?curve.map(v=>v/_maxCurve):curve;
+  drawCurve('result-curve',_curveR,p.r,500,460);
   const modeLabel=p.mode.replace(/_/g,' ');
   document.getElementById('result-param-body').innerHTML=[
     ['Diffusion coeff.','D',p.D],['Degradation rate','λ',p.lam],['Uptake rate','k',p.k],
@@ -3135,7 +3139,8 @@ function filterDB(){
 }
 function loadFromDB(idx){
   const d=DB[idx]; setSliders(d);
-  const opt=[...document.getElementById('drug-select').options].find(o=>o.value===d.drug.toLowerCase().replace(/[\s\-()/]/g,'_').replace(/_+/g,'_'));
+  const normalizeKey=name=>name.toLowerCase().replace(/\s*\([^)]*\)/g,'').trim().replace(/[\s\-]+/g,'_');
+  const opt=[...document.getElementById('drug-select').options].find(o=>o.value===normalizeKey(d.drug));
   document.getElementById('drug-select').value=opt?opt.value:'custom';
   document.getElementById('tumor-select').value=d.tumor;
   // Particle size → D_eff
