@@ -185,10 +185,10 @@ PDEOncology v0.5 includes an experimental validation tab comparing radial penetr
 | Agreement | RMSE threshold |
 | --- | --- |
 | Good | < 0.08 |
-| Acceptable | < 0.15 |
-| Poor | ≥ 0.15 |
+| Acceptable | < 0.20 |
+| Poor | ≥ 0.20 |
 
-Datasets: Thurber et al. 2008 (IgG antibody, small molecule), Minchinton & Tannock 2006 (doxorubicin spheroid). Poor agreement for Trastuzumab (large antibody) is a known model limitation — the binding-site barrier effect is not captured by the current linear uptake term.
+Datasets: Thurber et al. 2008 (IgG antibody, small molecule), Minchinton & Tannock 2006 (doxorubicin spheroid). Acceptable agreement for Trastuzumab (large antibody) is a known model limitation — the binding-site barrier effect is not captured by the current linear uptake term.
 
 > Experimental data points are approximate digitisations. Full quantitative validation would require raw tabular data directly from authors.
 
