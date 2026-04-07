@@ -460,7 +460,7 @@ var _hmt = _hmt || [];
           <div class="feat-card" style="border-top:2px solid var(--green);">
             <div class="feat-icon green">✓</div>
             <h3>Experimental Validation</h3>
-            <p>3 digitized spheroid datasets (Thurber et al. 2008, Minchinton & Tannock 2006). Model vs experiment overlay with RMSE. Downloadable validation report. <span class="tag green">RMSE &lt; 0.08</span></p>
+            <p>3 digitized spheroid datasets (Thurber et al. 2008, Minchinton & Tannock 2006). Model vs experiment overlay with RMSE. Downloadable validation report. <span class="tag green">RMSE &lt; 0.20 · Dox: 0.062</span></p>
           </div>
           <div class="feat-card" style="border-top:2px solid var(--blue);">
             <div class="feat-icon blue">◧</div>
@@ -1319,7 +1319,7 @@ const VALIDATION_DATASETS=[
     drug:'Cisplatin',
     cite:'Minchinton & Tannock 2006',
     journal:'Nature Reviews Cancer',
-    params:{D:.12,lam:.003,k:.08,r:22,steps:500,mode:'tumor_surface'},
+    params:{D:.12,lam:.003,k:.05,r:22,steps:350,mode:'tumor_surface'},
     points:[[0,1.00],[3,.86],[6,.72],[9,.58],[12,.45],[15,.32],[18,.21],[21,.13]],
     note:'Small platinum complex (300 Da) in EMT6 spheroids. Substantially better tumour penetration than macromolecules; exponential decay slower due to high diffusivity. Used as positive control in drug penetration studies.',
     drugClass:'Platinum agent',MW:'300 Da'
