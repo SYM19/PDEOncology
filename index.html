@@ -619,7 +619,7 @@ var _hmt = _hmt || [];
           </div>
           
           <hr class="divider" style="margin:.875rem 0;"/>
-          <div class="slider-row"><span class="slider-name">D · diffusion</span><button type="button" class="help-btn" aria-label="Help for D" onclick="openSliderHelp('D',this)">?</button><input type="range" id="sl-D" min="0.5" max="25" step="0.5" value="8" oninput="sy('D',this.value)"><span class="slider-val" id="vD">0.08</span></div>
+          <div class="slider-row"><span class="slider-name">D · diffusion</span><button type="button" class="help-btn" aria-label="Help for D" onclick="openSliderHelp('D',this)">?</button><input type="range" id="sl-D" min="0.1" max="25" step="0.1" value="8" oninput="sy('D',this.value)"><span class="slider-val" id="vD">0.08</span></div>
           <div class="slider-hint">D (diffusion coefficient): 0.005–0.25 (normalised vs free diffusion in water ≈ 10−5 cm2/s). Small molecules (e.g. doxorubicin) ≈ 0.08; large antibodies ≈ 0.01.</div>
           <div class="slider-row"><span class="slider-name">λ · decay</span><button type="button" class="help-btn" aria-label="Help for λ" onclick="openSliderHelp('lam',this)">?</button><input type="range" id="sl-lam" min="1" max="50" step="1" value="5" oninput="sy('lam',this.value)"><span class="slider-val" id="vlam">0.005</span></div>
           <div class="slider-hint">λ (degradation rate): 0.001–0.05 (normalised 1/time). Reflects metabolic clearance.</div>
@@ -1441,7 +1441,7 @@ function closeSliderHelp(){
 document.addEventListener('keydown',(e)=>{if(e.key==='Escape') closeSliderHelp();});
 
 function setSliders(p){
-  const dRaw=Math.round(p.D*100*2)/2; // slider uses steps of 0.5 in "D*100" space
+  const dRaw=Math.round(p.D*100*10)/10; // make sure doesnt round up 
   document.getElementById('sl-D').value=dRaw;
   document.getElementById('sl-lam').value=Math.round(p.lam*1000);
   document.getElementById('sl-k').value=Math.round(p.k*100);
@@ -3026,6 +3026,7 @@ function printReport(){
   p{margin-bottom:8px;color:#2a3545;}
   img{max-width:100%;page-break-inside:avoid;}
   .metric-grid{page-break-inside:avoid;}
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:12px 0;" class="fig-grid">
   .metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0;}
   .metric{background:#f4f7fb;border:1px solid #dde3ee;border-radius:6px;padding:10px 12px;}
   .metric-label{font-size:7.5pt;font-weight:600;color:#5a7090;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;}
@@ -3193,7 +3194,7 @@ function loadCmpPreset(ab){
   const p = DB.find(d => normalizeKey(d.drug) === drug && d.tumor === tumor)
           || DB.find(d => normalizeKey(d.drug) === drug);
   if(!p) return;
-  const dRaw=Math.round(p.D*100*2)/2;
+  const dRaw=Math.round(p.D*100*10)/10;
   document.getElementById('cmp'+ab+'-D').value=dRaw;
   document.getElementById('cmp'+ab+'-lam').value=Math.round(p.lam*1000);
   document.getElementById('cmp'+ab+'-k').value=Math.round(p.k*100);
