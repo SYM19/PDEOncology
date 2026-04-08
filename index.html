@@ -1735,7 +1735,10 @@ function renderAnimFrame(idx){
   const _mf=C.reduce((a,b)=>a>b?a:b,0);
   const _dc=_mf>0&&_mf<0.05?C.map(v=>v/_mf):C;
   drawHeatmap('anim-heatmap',_dc,cx,cy,r,400,400);
-  const curve=radialCurve(C,cx,cy);drawCurve('anim-curve',curve,r,700,200);
+  const curve=radialCurve(C,cx,cy);
+  const _animMax=Math.max(...curve);
+  const _animCurve=_animMax>0&&_animMax<0.05?curve.map(v=>v/_animMax):curve;
+  drawCurve('anim-curve',_animCurve,r,700,200);
   document.getElementById('anim-lbl').textContent=`step ${step}`;
   document.getElementById('anim-frame-badge').textContent=`frame ${idx+1} / ${animFrames.length}`;
   document.getElementById('anim-scrub').value=idx;document.getElementById('anim-scrub-val').textContent=idx;
@@ -2992,7 +2995,110 @@ function exportPhysiCell(){
   a.click();
 }
 function exportPNG(){const a=document.createElement('a');a.href=document.getElementById('result-heatmap').toDataURL('image/png');a.download='PDEOncology_heatmap.png';a.click();}
-function printReport(){window.print();}
+function printReport(){
+  if(!simResult){alert('Run a simulation first.');return;}
+  const{metrics,p,curve}=simResult;
+  const _twoComp=document.getElementById('twocomp-toggle').checked;
+  const _krel=_twoComp?(parseFloat(document.getElementById('sl-krel').value)/1000).toFixed(3):'—';
+  const _dFree=_twoComp?Math.min(0.25,p.D*10).toFixed(4):'—';
+  const diff=p.D<.03?'severely limited':p.D<.07?'moderately limited':'relatively good';
+
+  const html=`<!DOCTYPE html><html><head><title>PDEOncology Report — ${p.drug} / ${p.tumor}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Inter',Arial,sans-serif;color:#1a2030;background:#fff;padding:0;font-size:10.5pt;line-height:1.6;}
+  .page{max-width:720px;margin:0 auto;padding:36px 48px;}
+  .header{border-bottom:2px solid #1a3a6b;padding-bottom:16px;margin-bottom:24px;}
+  .logo{font-family:'Space Mono',monospace;font-size:15pt;font-weight:700;color:#1a3a6b;letter-spacing:-.02em;}
+  .logo em{color:#1a7a3c;font-style:normal;}
+  .meta{font-size:8.5pt;color:#666;margin-top:4px;}
+  h1{font-size:13pt;font-weight:600;color:#1a2030;margin:20px 0 6px;}
+  h2{font-size:10pt;font-weight:600;color:#1a3a6b;text-transform:uppercase;letter-spacing:.08em;margin:18px 0 8px;border-bottom:1px solid #dde3ee;padding-bottom:4px;}
+  p{margin-bottom:8px;color:#2a3545;}
+  .metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0;}
+  .metric{background:#f4f7fb;border:1px solid #dde3ee;border-radius:6px;padding:10px 12px;}
+  .metric-label{font-size:7.5pt;font-weight:600;color:#5a7090;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;}
+  .metric-value{font-family:'Space Mono',monospace;font-size:13pt;font-weight:700;color:#1a3a6b;}
+  .metric-unit{font-size:7.5pt;color:#888;}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:9.5pt;}
+  th{text-align:left;font-size:8pt;font-weight:600;color:#5a7090;padding:6px 10px;border-bottom:1.5px solid #c8d5e8;text-transform:uppercase;letter-spacing:.06em;background:#f9fafc;}
+  td{padding:7px 10px;border-bottom:1px solid #e8ecf4;color:#2a3545;}
+  tr:last-child td{border-bottom:none;}
+  .formula{background:#f4f7fb;border-left:3px solid #1a3a6b;border-radius:0 4px 4px 0;padding:10px 14px;font-family:'Space Mono',monospace;font-size:9pt;color:#1a3a6b;margin:10px 0;}
+  .note{background:#fff8ee;border:1px solid #e8c97a;border-radius:4px;padding:9px 12px;font-size:9pt;color:#5a3a00;margin:10px 0;}
+  .disclaimer{font-size:8pt;color:#888;border-top:1px solid #dde3ee;margin-top:24px;padding-top:12px;}
+  .two-comp-box{background:#edfaf4;border:1px solid #7bcca0;border-radius:4px;padding:10px 14px;margin:10px 0;font-size:9.5pt;}
+  .badge{display:inline-block;background:#1a3a6b;color:#fff;font-size:7.5pt;font-weight:600;border-radius:3px;padding:2px 7px;vertical-align:middle;margin-left:6px;}
+  .badge.green{background:#1a7a3c;}
+  @media print{body{padding:0;} .page{padding:20px 30px;max-width:100%;}}
+</style></head>
+<body><div class="page">
+<div class="header">
+  <div class="logo">PDE<em>Oncology</em> <span style="font-size:9pt;font-weight:400;color:#888;">v0.5</span></div>
+  <div class="meta">Tumor Drug Penetration Simulator · pdeoncology.com · Generated: ${new Date().toLocaleString('en-GB',{dateStyle:'long',timeStyle:'short'})}</div>
+</div>
+
+<h1>${p.drug.replace(/_/g,' ')} in ${p.tumor.charAt(0).toUpperCase()+p.tumor.slice(1)} Cancer <span class="badge">${p.mode.replace(/_/g,' ')}</span>${_twoComp?'<span class="badge green">Two-Compartment</span>':''}</h1>
+
+<h2>Key Metrics</h2>
+<div class="metric-grid">
+  <div class="metric"><div class="metric-label">Tumour Avg C${_twoComp?' (C_free)':''}</div><div class="metric-value">${metrics.tumorAvg}</div></div>
+  <div class="metric"><div class="metric-label">Peak C</div><div class="metric-value">${metrics.maxC}</div></div>
+  <div class="metric"><div class="metric-label">50% Depth</div><div class="metric-value">${metrics.depth50}<span class="metric-unit"> px</span></div></div>
+  <div class="metric"><div class="metric-label">Coverage</div><div class="metric-value">${metrics.coverage}<span class="metric-unit">%</span></div></div>
+</div>
+
+<h2>Model Equations</h2>
+${_twoComp?`
+<div class="formula">∂C_nano/∂t = D_nano·∇²C_nano − κ·C_nano<br>∂C_free/∂t = D_free·∇²C_free + κ·C_nano − λ·C_free − k·φ·ρ·C_free</div>
+<div class="two-comp-box"><strong>Two-compartment nanoparticle release active</strong> (κ = ${_krel}): the nanoparticle depot (D_nano = ${p.D}) diffuses through the ECM and releases active drug at rate κ. Released drug (D_free = ${_dFree}) then diffuses, degrades, and is taken up by cells. All metrics reflect C_free (bioavailable drug).${parseFloat(metrics.maxC)<0.01?' Peak C_free is very small — consider increasing steps or κ.':''}</div>
+`:`
+<div class="formula">∂C/∂t = ∇·(D(x,y)∇C)${p.ifp>0?' − v·∇C':''} − λC − k·ρ(x,y)·C</div>
+`}
+
+<h2>Simulation Parameters</h2>
+<table>
+  <thead><tr><th>Parameter</th><th>Symbol</th><th>Value</th><th>Interpretation</th></tr></thead>
+  <tbody>
+    <tr><td>Diffusion coefficient</td><td>D</td><td>${p.D}</td><td>Transport is ${diff}</td></tr>
+    <tr><td>Degradation rate</td><td>λ</td><td>${p.lam}</td><td>Metabolic clearance</td></tr>
+    <tr><td>Cellular uptake rate</td><td>k</td><td>${p.k}</td><td>${p.k>.08?'High':p.k>.05?'Moderate':'Low'} receptor-mediated retention</td></tr>
+    <tr><td>Tumour radius</td><td>r</td><td>${p.r} px</td><td>≈ ${(p.r/80).toFixed(3)} cm on 1 cm section</td></tr>
+    <tr><td>IFP magnitude</td><td>v₀</td><td>${p.ifp||0}</td><td>${p.ifp>0?'Outward Darcy flow opposing drug diffusion':'IFP disabled'}</td></tr>
+    ${_twoComp?`<tr><td>Release rate κ</td><td>κ</td><td>${_krel}</td><td>NP→free drug conversion rate</td></tr>`:''}
+    <tr><td>Time steps</td><td>n</td><td>${p.steps}</td><td>Explicit FDM integration length</td></tr>
+    <tr><td>Delivery mode</td><td>—</td><td>${p.mode.replace(/_/g,' ')}</td><td>Boundary condition type</td></tr>
+  </tbody>
+</table>
+
+<h2>Results Summary</h2>
+<p>Simulation of <strong>${p.drug.replace(/_/g,' ')}</strong> in <strong>${p.tumor}</strong> tumour (radius ${p.r} px ≈ ${(p.r/80).toFixed(3)} cm, ${p.mode.replace(/_/g,' ')}${p.ifp>0?', IFP v₀ = '+p.ifp:''}${_twoComp?', two-compartment NP release':''}) over ${p.steps} explicit finite-difference time steps (FTCS, 80×80 grid, Δx = 1/80, CFL-stable).</p>
+<p>Mean tumour ${_twoComp?'C_free':'concentration'} = <strong>${metrics.tumorAvg}</strong>; peak = <strong>${metrics.maxC}</strong>. The 50% penetration depth is <strong>${metrics.depth50} px</strong>, with <strong>${metrics.coverage}%</strong> of the tumour volume exceeding the 10% threshold concentration. Diffusion is ${diff} (D = ${p.D}); cellular retention is ${p.k>.08?'high':p.k>.05?'moderate':'low'} (k = ${p.k}).${p.ifp>0?' Outward IFP-driven interstitial flow (v₀ = '+p.ifp+') opposing inward diffusion, consistent with Jain (1987) and Stylianopoulos et al. (2012).':''}</p>
+
+<h2>Numerical Method</h2>
+<p>Reaction-diffusion${p.ifp>0?'-convection':''} PDE solved using an explicit FTCS finite difference scheme on an 80×80 uniform grid. CFL stability enforced: Δt ≤ Δx²/(4D${p.ifp>0?'), Δt ≤ Δx/v₀':')'}. Spatially-varying diffusion field D(x,y) attenuated toward tumour core. Cell density field ρ(x,y) modelled as radially-graded.${_twoComp?' Two-compartment solver uses separate FTCS updates for C_nano and C_free per timestep.':''}</p>
+
+<h2>References</h2>
+<table>
+  <tbody>
+    <tr><td>Jain RK (1987). Transport of molecules in the tumor interstitium. <em>Cancer Research</em> 47(12):3039.</td></tr>
+    <tr><td>Thurber GM, Schmidt MM, Wittrup KD (2008). Antibody tumor penetration. <em>Adv Drug Deliv Rev</em> 60(12).</td></tr>
+    <tr><td>Minchinton AI, Tannock IF (2006). Drug penetration in solid tumours. <em>Nat Rev Cancer</em> 6(8):583.</td></tr>
+    <tr><td>Stylianopoulos T et al. (2012). Causes, consequences, and remedies for growth-induced solid stress. <em>PNAS</em> 109(38).</td></tr>
+  </tbody>
+</table>
+
+<div class="note">⚠ Model disclaimer: Parameters are normalised and semi-empirical. Results are for exploratory research use only and are not validated for clinical decision-making. Experimental data points in built-in validation sets are approximate digitizations (±5–10% error).</div>
+
+<div class="disclaimer">PDEOncology v0.5 · Yang ZT, Shi Y. PDEOncology: Tumor Drug Penetration Simulator using Reaction-Diffusion-Convection PDEs with IFP Convection, 2026. · github.com/SYM19/tumor-drug-penetration-model · AGPL-3.0</div>
+</div></body></html>`;
+
+  const w=window.open('','_blank');
+  w.document.write(html);
+  w.document.close();
+  setTimeout(()=>w.print(),600);
+}
 
 /* =========================================================
    AI INPUT
