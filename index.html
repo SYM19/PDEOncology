@@ -1616,7 +1616,8 @@ function calcMetrics(C,cx,cy,r){
   }
   const covCount=Array.from(C).filter((v,i)=>{const y=Math.floor(i/N),x=i%N;return Math.sqrt((x-cx)**2+(y-cy)**2)<=r&&v>.1;}).length;
   const curve=radialCurve(C,cx,cy);
-  return{tumorAvg:tc>0?(ts/tc).toFixed(3):'0.000',maxC:maxC.toFixed(3),depth50:depth,coverage:tc>0?(covCount/tc*100).toFixed(1):'0.0',curve};
+  rconst _avg=tc>0?ts/tc:0;
+  return{tumorAvg:_avg<0.001?_avg.toExponential(2):_avg.toFixed(3),maxC:maxC<0.001?maxC.toExponential(2):maxC.toFixed(3),depth50:depth,
 }
 
 /* =========================================================
@@ -1686,7 +1687,9 @@ async function runSim(){
     }
   }
   const curve=radialCurve(C,cx,cy),metrics=calcMetrics(C,cx,cy,p.r);
-  drawCurve('curve-canvas',curve,p.r,1000,200);
+  const _simCurveMax=Math.max(...curve);
+  const _simCurve=twoComp&&_simCurveMax>0&&_simCurveMax<0.05?curve.map(v=>v/_simCurveMax):curve;
+  drawCurve('curve-canvas',_simCurve,p.r,1000,200);
   document.getElementById('m-tavg').textContent=metrics.tumorAvg;
   document.getElementById('m-max').textContent=metrics.maxC;
   document.getElementById('m-depth').textContent=metrics.depth50;
@@ -2699,11 +2702,14 @@ function renderResults(){
     ['Steps','n',p.steps],['Delivery mode','—',modeLabel],
   ].map(([n,s,v])=>`<tr><td>${n}</td><td><code>${s}</code></td><td>${v}</td></tr>`).join('');
   const diff=p.D<.03?'severely limited':p.D<.07?'moderately limited':'relatively good';
+  const _twoCompActive=document.getElementById('twocomp-toggle').checked;
+  const _krelVal=_twoCompActive?(parseFloat(document.getElementById('sl-krel').value)/1000).toFixed(3):'—';
   document.getElementById('report-text').innerHTML=`
-    <p>Simulation of <strong>${p.drug}</strong> in <strong>${p.tumor}</strong> tumor (radius ${p.r} px, ${modeLabel}${p.ifp>0?', IFP = '+p.ifp:''}).</p>
-    <p>After ${p.steps} time steps, mean tumor concentration = <strong>${metrics.tumorAvg}</strong>, peak = <strong>${metrics.maxC}</strong>. 50% penetration depth: <strong>${metrics.depth50} px</strong>. Coverage above threshold: <strong>${metrics.coverage}%</strong>.</p>
-    <p>D = ${p.D} — transport is ${diff}. λ = ${p.lam}, k = ${p.k} → ${p.k>.08?'high':p.k>.05?'moderate':'low'} cellular retention.${p.ifp>0?` IFP (v₀ = ${p.ifp}) reduces core concentration by opposing inward diffusion.`:''}</p>
-    <p style="color:var(--text3);font-size:.8rem;"><em>For research use only. Model approximation; not for clinical use.</em></p>`;
+      <p>Simulation of <strong>${p.drug}</strong> in <strong>${p.tumor}</strong> tumor (radius ${p.r} px, ${modeLabel}${p.ifp>0?', IFP = '+p.ifp:''}${_twoCompActive?', two-compartment NP release':''}).</p>
+      ${_twoCompActive?`<p><strong>Two-compartment mode active</strong> (κ = ${_krelVal}): nanoparticle depot diffuses at D_nano = ${p.D}, releasing active drug at rate κ. D_free = ${Math.min(0.25,p.D*10).toFixed(4)}. Displayed metrics and curves reflect C_free (bioavailable drug), auto-scaled if peak &lt; 0.05.</p>`:''}
+      <p>After ${p.steps} time steps, mean tumour C_free = <strong>${metrics.tumorAvg}</strong>, peak = <strong>${metrics.maxC}</strong>. 50% penetration depth: <strong>${metrics.depth50} px</strong>. Coverage above 10% threshold: <strong>${metrics.coverage}%</strong>.${parseFloat(metrics.maxC)<0.01?' Note: values are very small — increase steps or κ for more penetration.':''}</p>
+      <p>D = ${p.D} — transport is ${diff}. λ = ${p.lam}, k = ${p.k} → ${p.k>.08?'high':p.k>.05?'moderate':'low'} cellular retention.${p.ifp>0?` IFP (v₀ = ${p.ifp}) reduces core concentration by opposing inward diffusion.`:''}</p>
+      <p style="color:var(--text3);font-size:.8rem;"><em>For research use only. Model approximation; not for clinical use.</em></p>`;
 }
 
 /* =========================================================
