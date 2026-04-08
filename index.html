@@ -1616,8 +1616,8 @@ function calcMetrics(C,cx,cy,r){
   }
   const covCount=Array.from(C).filter((v,i)=>{const y=Math.floor(i/N),x=i%N;return Math.sqrt((x-cx)**2+(y-cy)**2)<=r&&v>.1;}).length;
   const curve=radialCurve(C,cx,cy);
-  rconst _avg=tc>0?ts/tc:0;
-  return{tumorAvg:_avg<0.001?_avg.toExponential(2):_avg.toFixed(3),maxC:maxC<0.001?maxC.toExponential(2):maxC.toFixed(3),depth50:depth,
+  const _avg=tc>0?ts/tc:0;
+  return{tumorAvg:_avg<0.001?_avg.toExponential(2):_avg.toFixed(3),maxC:maxC<0.001?maxC.toExponential(2):maxC.toFixed(3),depth50:depth,coverage:tc>0?(covCount/tc*100).toFixed(1):'0.0',curve};
 }
 
 /* =========================================================
