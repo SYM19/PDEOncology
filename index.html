@@ -1688,8 +1688,11 @@ async function runSim(){
   }
   const curve=radialCurve(C,cx,cy),metrics=calcMetrics(C,cx,cy,p.r);
   const _simCurveMax=Math.max(...curve);
-  const _simCurve=twoComp&&_simCurveMax>0&&_simCurveMax<0.05?curve.map(v=>v/_simCurveMax):curve;
-  drawCurve('curve-canvas',_simCurve,p.r,1000,200);
+  let _simCurve=_maxCurve>0&&_maxCurve<0.05?curve.map(v=>v/_maxCurve):curve;
+  if(_maxCurve>0&&_maxCurve<0.05){
+    _simCurve=_curveR.map((v,i,a)=>i===0||i===a.length-1?v:(v+a[i-1]+a[i+1])/3);
+  }
+  drawCurve('curve-canvas',_curveR,p.r,500,460);
   document.getElementById('m-tavg').textContent=metrics.tumorAvg;
   document.getElementById('m-max').textContent=metrics.maxC;
   document.getElementById('m-depth').textContent=metrics.depth50;
@@ -2696,7 +2699,10 @@ function renderResults(){
   const _CR=_maxR>0&&_maxR<0.05?C.map(v=>v/_maxR):C;
   drawHeatmap('result-heatmap',_CR,cx,cy,p.r,500,460);
   const _maxCurve=Math.max(...curve);
-  const _curveR=_maxCurve>0&&_maxCurve<0.05?curve.map(v=>v/_maxCurve):curve;
+  let _curveR=_maxCurve>0&&_maxCurve<0.05?curve.map(v=>v/_maxCurve):curve;
+  if(_maxCurve>0&&_maxCurve<0.05){
+    _curveR=_curveR.map((v,i,a)=>i===0||i===a.length-1?v:(v+a[i-1]+a[i+1])/3);
+  }
   drawCurve('result-curve',_curveR,p.r,500,460);
   const modeLabel=p.mode.replace(/_/g,' ');
   document.getElementById('result-param-body').innerHTML=[
@@ -2998,6 +3004,8 @@ function exportPNG(){const a=document.createElement('a');a.href=document.getElem
 function printReport(){
   if(!simResult){alert('Run a simulation first.');return;}
   const{metrics,p,curve}=simResult;
+  const _heatmapImg=document.getElementById('result-heatmap').toDataURL('image/png');
+  const _curveImg=document.getElementById('result-curve').toDataURL('image/png');
   const _twoComp=document.getElementById('twocomp-toggle').checked;
   const _krel=_twoComp?(parseFloat(document.getElementById('sl-krel').value)/1000).toFixed(3):'—';
   const _dFree=_twoComp?Math.min(0.25,p.D*10).toFixed(4):'—';
@@ -3016,6 +3024,8 @@ function printReport(){
   h1{font-size:13pt;font-weight:600;color:#1a2030;margin:20px 0 6px;}
   h2{font-size:10pt;font-weight:600;color:#1a3a6b;text-transform:uppercase;letter-spacing:.08em;margin:18px 0 8px;border-bottom:1px solid #dde3ee;padding-bottom:4px;}
   p{margin-bottom:8px;color:#2a3545;}
+  img{max-width:100%;page-break-inside:avoid;}
+  .metric-grid{page-break-inside:avoid;}
   .metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0;}
   .metric{background:#f4f7fb;border:1px solid #dde3ee;border-radius:6px;padding:10px 12px;}
   .metric-label{font-size:7.5pt;font-weight:600;color:#5a7090;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;}
@@ -3071,6 +3081,18 @@ ${_twoComp?`
     <tr><td>Delivery mode</td><td>—</td><td>${p.mode.replace(/_/g,' ')}</td><td>Boundary condition type</td></tr>
   </tbody>
 </table>
+
+<h2>Simulation Figures</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:12px 0;">
+  <div>
+    <div style="font-size:8pt;font-weight:600;color:#5a7090;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Concentration Heatmap</div>
+    <img src="${_heatmapImg}" style="width:100%;border:1px solid #dde3ee;border-radius:4px;" alt="Concentration heatmap"/>
+  </div>
+  <div>
+    <div style="font-size:8pt;font-weight:600;color:#5a7090;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Radial Penetration Curve</div>
+    <img src="${_curveImg}" style="width:100%;border:1px solid #dde3ee;border-radius:4px;" alt="Radial penetration curve"/>
+  </div>
+</div>
 
 <h2>Results Summary</h2>
 <p>Simulation of <strong>${p.drug.replace(/_/g,' ')}</strong> in <strong>${p.tumor}</strong> tumour (radius ${p.r} px ≈ ${(p.r/80).toFixed(3)} cm, ${p.mode.replace(/_/g,' ')}${p.ifp>0?', IFP v₀ = '+p.ifp:''}${_twoComp?', two-compartment NP release':''}) over ${p.steps} explicit finite-difference time steps (FTCS, 80×80 grid, Δx = 1/80, CFL-stable).</p>
