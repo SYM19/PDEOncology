@@ -1688,11 +1688,11 @@ async function runSim(){
   }
   const curve=radialCurve(C,cx,cy),metrics=calcMetrics(C,cx,cy,p.r);
   const _simCurveMax=Math.max(...curve);
-  let _simCurve=_maxCurve>0&&_maxCurve<0.05?curve.map(v=>v/_maxCurve):curve;
-  if(_maxCurve>0&&_maxCurve<0.05){
-    _simCurve=_curveR.map((v,i,a)=>i===0||i===a.length-1?v:(v+a[i-1]+a[i+1])/3);
+  let _simCurve=_simCurveMax>0&&_simCurveMax<0.05?curve.map(v=>v/_simCurveMax):curve;
+  if(_simCurveMax>0&&_simCurveMax<0.05){
+    _simCurve=_simCurve.map((v,i,a)=>i===0||i===a.length-1?v:(v+a[i-1]+a[i+1])/3);
   }
-  drawCurve('curve-canvas',_curveR,p.r,500,460);
+  drawCurve('curve-canvas',_simCurve,p.r,1000,200);
   document.getElementById('m-tavg').textContent=metrics.tumorAvg;
   document.getElementById('m-max').textContent=metrics.maxC;
   document.getElementById('m-depth').textContent=metrics.depth50;
