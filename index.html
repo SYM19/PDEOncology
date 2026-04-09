@@ -221,7 +221,9 @@ var _hmt = _hmt || [];
     .code-box{background:#030507;border:1px solid var(--border);border-radius:var(--radius);padding:1rem;font-family:var(--mono);font-size:.72rem;color:#b8d4ff;line-height:1.8;overflow-x:auto;white-space:pre;max-height:360px;overflow-y:auto;}
 
     /* ── TABLET 900px ── */
-    @media(max-width:768px){
+    @media(max-width:768px) and (max-width:1100px){
+      #sim-main-grid{grid-template-columns:1fr 1fr!important;}
+}
       .grid-2,.grid-3{grid-template-columns:1fr;}
       /* Validation dataset cards: 2 col on tablet */
       #val-dataset-grid{grid-template-columns:1fr 1fr;}
