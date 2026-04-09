@@ -423,7 +423,7 @@ var _hmt = _hmt || [];
     <div class="header-right">
       <a class="outreach-link" href="https://pdeoutreach.com" target="_blank">PDEOutreach ↗</a>
       <div class="status-dot"></div>
-      <span class="v-badge">v0.5</span>
+      <span class="v-badge">v0.6</span>
     </div>
   </header>
 
@@ -434,8 +434,8 @@ var _hmt = _hmt || [];
       <div class="hero section">
         <div class="hero-title"><span class="pde">PDE</span><span class="onco">Oncology</span></div>
         <p style="max-width:680px;font-size:.95rem;">A browser-based platform for simulating tumor drug penetration using reaction-diffusion-convection PDEs. Extended in v0.5 with IFP convection transport, experimental validation against published spheroid data, and parameter sweep analysis.</p>
-        <div class="formula-box">∂C/∂t = ∇·(D(x,y)∇C) − <span style="color:var(--amber)">v·∇C</span> − λC − k·ρ(x,y)·C</div>
-        <p style="font-size:.8rem;color:var(--text3);">New in v0.5: convection term <code style="color:var(--amber);">v·∇C</code> from IFP-driven interstitial flow (Jain 1987, Darcy's law approximation). <a href="#" onclick="switchTab('validation');return false;">Validated against Thurber et al. 2008 →</a></p>
+        <div class="formula-box">∂C/∂t = ∇·(D(x,y)∇C) − <span style="color:var(--amber)">v·∇C</span> − λC − k·ρ(x,y)·C − <span style="color:var(--red)">λ_L·δ<sub>∂Ω</sub>·C</span></div>
+        <p style="font-size:.8rem;color:var(--text3);">v0.5: convection term <code style="color:var(--amber);">v·∇C</code> from IFP-driven interstitial flow (Jain 1987). v0.6 adds lymphatic sink, vascular normalisation window, metronomic/MTD dosing, and retardation factor r_f — features directly informed by Nikmaneshi, Jain & Munn (<a href="https://doi.org/10.1371/journal.pcbi.1011131" target="_blank" rel="noopener noreferrer">PLoS Comput Biol 2023 ↗</a>) and personal correspondence with Prof. Jain. <a href="#" onclick="switchTab('validation');return false;">Validated against Thurber et al. 2008 →</a></p>
         <div class="hero-chips">
           <span class="hero-chip">FDM · FTCS + upwind</span>
           <span class="hero-chip">80 × 80 grid</span>
@@ -445,6 +445,9 @@ var _hmt = _hmt || [];
           <span class="hero-chip">Python export</span>
           <span class="hero-chip">LaTeX snippet</span>
           <span class="hero-chip">Claude API</span>
+          <span class="hero-chip">lymphatic sink</span>
+          <span class="hero-chip">vascular normalisation</span>
+          <span class="hero-chip">metronomic dosing</span>
         </div>
       </div>
       
@@ -494,6 +497,7 @@ var _hmt = _hmt || [];
               <tr><td><a href="https://doi.org/10.1038/nrc1893" target="_blank" rel="noopener noreferrer">Minchinton AI &amp; Tannock IF (2006)</a></td></tr>
               <tr><td><a href="https://pubmed.ncbi.nlm.nih.gov/17504972/" target="_blank" rel="noopener noreferrer">Kyle AH et al. (2007)</a></td></tr>
               <tr><td><a href="https://doi.org/10.1073/pnas.1205154109" target="_blank" rel="noopener noreferrer">Stylianopoulos T et al. (2012)</a></td></tr>
+              <tr><td><a href="https://doi.org/10.1371/journal.pcbi.1011131" target="_blank" rel="noopener noreferrer">Nikmaneshi MR, Jain RK, Munn LL (2023)</a></td></tr>
             </tbody>
           </table>
         </div>
@@ -614,6 +618,8 @@ var _hmt = _hmt || [];
               <option value="constant">Constant (steady-state IV)</option>
               <option value="bolus">Bolus IV (peaks at t=0, exponential decay)</option>
               <option value="infusion">Timed infusion (ramp → plateau → decay)</option>
+              <option value="metronomic">Metronomic (low-dose, frequent cycles)</option>
+              <option value="mtd">MTD (max-tolerated dose, infrequent bolus)</option>
             </select>
             <div style="font-family:var(--mono);font-size:.68rem;color:var(--text3);margin-top:5px;min-height:14px;" id="pk-hint">Boundary C = 1 held constant throughout simulation.</div>
           </div>
@@ -643,8 +649,62 @@ var _hmt = _hmt || [];
               <input type="range" id="sl-ifp" min="0" max="15" step="1" value="0" oninput="sy('ifp',this.value)" style="accent-color:var(--amber);">
               <span class="slider-val" id="vifp" style="color:var(--amber);">0.00</span>
             </div>
-            <div class="slider-hint" style="margin-top:-4px;margin-bottom:10px;">IFP magnitude: 0.00–0.15 (dimensionless; scaled from typical tumour IFP 5–30 mmHg via Darcy’s law). Outward flow opposes inward drug diffusion.</div>
+            <div class="slider-hint" style="margin-top:-4px;margin-bottom:10px;">IFP magnitude: 0.00–0.15 (dimensionless; scaled from typical tumour IFP 5–30 mmHg via Darcy's law). Outward flow opposes inward drug diffusion.</div>
+            <div class="slider-row" style="margin-top:6px;">
+              <span class="slider-name" style="color:var(--amber);">r_f retardation</span>
+              <button type="button" class="help-btn" aria-label="Help for retardation factor" onclick="openSliderHelp('rf',this)">?</button>
+              <input type="range" id="sl-rf" min="1" max="10" step="1" value="10" oninput="syRf(this.value)" style="accent-color:var(--amber);">
+              <span class="slider-val" id="vrf" style="color:var(--amber);">1.00</span>
+            </div>
+            <div class="slider-hint">r_f: ratio of solute to interstitial fluid velocity (Nikmaneshi, Jain & Munn 2023, Eq. 1). Small molecules ≈ 0.8–1.0; antibodies ≈ 0.1–0.3. Reduces effective convective transport for large MW drugs.</div>
             <p style="margin:0;font-size:.72rem;color:var(--text3);">IFP = 0 → standard diffusion. IFP > 0 → outward radial flow opposing drug.</p>
+          </div>
+
+          <!-- ── LYMPHATIC SINK ── -->
+          <div style="background:rgba(240,91,91,.04);border:1px solid rgba(240,91,91,.15);border-radius:var(--radius);padding:.875rem 1rem;margin-top:.875rem;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+              <label style="margin:0;font-size:.8rem;color:var(--red);font-weight:600;text-transform:none;">⊘ Lymphatic Sink</label>
+              <span class="tag red" id="lymph-badge">OFF</span>
+              <span style="font-family:var(--mono);font-size:.65rem;color:var(--text3);">Jain — boundary drainage</span>
+            </div>
+            <div class="slider-row">
+              <span class="slider-name" style="color:var(--red);">λ_lymph</span>
+              <input type="range" id="sl-lymph" min="0" max="30" step="1" value="0" oninput="syLymph(this.value)" style="accent-color:var(--red);">
+              <span class="slider-val" id="vlymph" style="color:var(--red);">0.00</span>
+            </div>
+            <div class="slider-hint">Extra degradation at tumour boundary ring (±2 px). Represents dysfunctional lymphatic drainage enforcing low C at periphery. λ_lymph 0.05–0.20 steepens penetration gradient.</div>
+            <p style="margin:0;font-size:.72rem;color:var(--text3);">Dysfunctional tumour lymphatics are unable to drain interstitial fluid, contributing to elevated IFP and a low-concentration boundary condition at the tumour periphery (Jain et al. 2007).</p>
+          </div>
+
+          <!-- ── VASCULAR NORMALISATION WINDOW ── -->
+          <div style="background:rgba(167,139,250,.04);border:1px solid rgba(167,139,250,.2);border-radius:var(--radius);padding:.875rem 1rem;margin-top:.875rem;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;">
+              <label style="margin:0;color:#a78bfa;font-size:.8rem;font-weight:600;text-transform:none;">↷ Vascular Normalisation Window</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin:0;text-transform:none;font-size:.75rem;color:var(--text2);">
+                <input type="checkbox" id="vascularnorm-toggle" onchange="onVascularNormToggle()" style="width:auto;accent-color:#a78bfa;">
+                <span id="vascularnorm-badge" class="tag">OFF</span>
+              </label>
+              <span style="font-family:var(--mono);font-size:.65rem;color:var(--text3);">requires IFP &gt; 0</span>
+            </div>
+            <div id="vascularnorm-params" style="display:none;">
+              <div class="slider-hint" style="margin-bottom:8px;">IFP decreases transiently during the normalisation window then recovers. Models anti-VEGF–induced vascular normalisation (Jain 2001). Drug delivery timed to coincide with window achieves greater penetration.</div>
+              <div class="slider-row">
+                <span class="slider-name" style="color:#a78bfa;">Window start</span>
+                <input type="range" id="sl-norm-start" min="0" max="80" step="5" value="20" oninput="document.getElementById('vnorm-start').textContent=this.value+'%'" style="accent-color:#a78bfa;">
+                <span class="slider-val" id="vnorm-start" style="color:#a78bfa;">20%</span>
+              </div>
+              <div class="slider-row">
+                <span class="slider-name" style="color:#a78bfa;">Window width</span>
+                <input type="range" id="sl-norm-width" min="5" max="50" step="5" value="30" oninput="document.getElementById('vnorm-width').textContent=this.value+'%'" style="accent-color:#a78bfa;">
+                <span class="slider-val" id="vnorm-width" style="color:#a78bfa;">30%</span>
+              </div>
+              <div class="slider-row">
+                <span class="slider-name" style="color:#a78bfa;">IFP reduction</span>
+                <input type="range" id="sl-norm-reduction" min="10" max="100" step="10" value="60" oninput="document.getElementById('vnorm-reduction').textContent=this.value+'%'" style="accent-color:#a78bfa;">
+                <span class="slider-val" id="vnorm-reduction" style="color:#a78bfa;">60%</span>
+              </div>
+              <p style="font-size:.72rem;color:var(--text3);margin:4px 0 0;">IFP(t) = IFP_base × (1 − reduction × sin(π·phase)). Cosine-windowed profile, smooth at edges.</p>
+            </div>
           </div>
 
           <!-- ── RECEPTOR EXPRESSION φ ── -->
@@ -1409,6 +1469,12 @@ const PARAM_HELP={
     refLabel:'Stylianopoulos T et al. (2012)',
     refUrl:'https://doi.org/10.1073/pnas.1205154109',
   },
+  rf:{
+    title:'r_f (retardation factor)',
+    meaning:'Ratio of solute velocity to interstitial fluid velocity. Large molecules are slowed by steric and electrostatic interactions with the ECM — antibodies and nanoparticles experience much stronger retardation than small chemotherapy molecules.',
+    refLabel:'Nikmaneshi MR, Jain RK, Munn LL (2023)',
+    refUrl:'https://doi.org/10.1371/journal.pcbi.1011131',
+  },
   steps:{
     title:'Steps (n)',
     meaning:'More steps improves numerical resolution of the explicit finite-difference solver, yielding smoother penetration curves.',
@@ -1542,7 +1608,7 @@ function initC(mode,cx,cy,r){
 }
 
 /* Standard PDE chunk (no IFP) */
-function pdeChunk(C, Df, rho, dx, dt, lam, k, phi, steps, mode, boundaryC=1, cx=40, cy=40, r=22) {
+function pdeChunk(C, Df, rho, dx, dt, lam, k, phi, steps, mode, boundaryC=1, cx=40, cy=40, r=22, lymphField=null, lymphSink=0) {
   const C2 = new Float32Array(N*N);
   let surfMask = null;
   if(mode==='tumor_surface'){
@@ -1555,24 +1621,13 @@ function pdeChunk(C, Df, rho, dx, dt, lam, k, phi, steps, mode, boundaryC=1, cx=
       for (let x = 1; x < N-1; x++) {
         const i = y*N+x;
         const lap = (C[(y-1)*N+x]+C[(y+1)*N+x]+C[y*N+(x-1)]+C[y*N+(x+1)]-4*C[i])/(dx*dx);
-        C2[i] = Math.max(0, C[i] + dt*(Df[i]*lap - lam*C[i] - k*phi*rho[i]*C[i]));
+        const lymphTerm = (lymphField && lymphSink > 0) ? lymphSink * lymphField[i] * C[i] : 0;
+        C2[i] = Math.max(0, C[i] + dt*(Df[i]*lap - lam*C[i] - k*phi*rho[i]*C[i] - lymphTerm));
       }
     }
-    if(mode==='left_boundary'){
-      for(let y=0;y<N;y++){C2[y*N]=boundaryC;C2[y*N+N-1]=0;}
-      for(let x=0;x<N;x++){C2[x]=0;C2[(N-1)*N+x]=0;}
-    } else if(mode==='outer_boundary'){
-      for(let y=0;y<N;y++){C2[y*N]=1;C2[y*N+N-1]=1;}
-      for(let x=0;x<N;x++){C2[x]=1;C2[(N-1)*N+x]=1;}
-    } else if(mode==='tumor_surface'&&surfMask){
-      for(let i=0;i<N*N;i++) if(surfMask[i]) C2[i]=1;
-    }
-    C.set(C2);
-  }
-}
 
 /* IFP-extended PDE chunk — upwind convection scheme for stability */
-function pdeChunkIFP(C, Df, rho, vx, vy, dx, dt, lam, k, phi, steps, mode, boundaryC=1, cx=40, cy=40, r=22){
+function pdeChunkIFP(C, Df, rho, vx, vy, dx, dt, lam, k, phi, steps, mode, boundaryC=1, cx=40, cy=40, r=22, lymphField=null, lymphSink=0){
   const C2=new Float32Array(N*N);
   for(let s=0;s<steps;s++){
     for(let y=1;y<N-1;y++) for(let x=1;x<N-1;x++){
@@ -1581,7 +1636,8 @@ function pdeChunkIFP(C, Df, rho, vx, vy, dx, dt, lam, k, phi, steps, mode, bound
       const vxi=vx[i],vyi=vy[i];
       const convX=vxi>0?vxi*(C[i]-C[y*N+(x-1)])/dx:vxi*(C[y*N+(x+1)]-C[i])/dx;
       const convY=vyi>0?vyi*(C[i]-C[(y-1)*N+x])/dx:vyi*(C[(y+1)*N+x]-C[i])/dx;
-      C2[i]=Math.max(0,C[i]+dt*(Df[i]*lap-convX-convY-lam*C[i]-k*phi*rho[i]*C[i]));
+      const lymphTerm = (lymphField && lymphSink > 0) ? lymphSink * lymphField[i] * C[i] : 0;
+      C2[i]=Math.max(0,C[i]+dt*(Df[i]*lap-convX-convY-lam*C[i]-k*phi*rho[i]*C[i]-lymphTerm));
     }
     if(mode==='left_boundary'){for(let y=0;y<N;y++){C2[y*N]=boundaryC;C2[y*N+N-1]=0;}for(let x=0;x<N;x++){C2[x]=0;C2[(N-1)*N+x]=0;}}
     else if(mode==='outer_boundary'){for(let y=0;y<N;y++){C2[y*N]=1;C2[y*N+N-1]=1;}for(let x=0;x<N;x++){C2[x]=1;C2[(N-1)*N+x]=1;}}
@@ -1643,6 +1699,9 @@ async function runSim(){
   const Df=buildDField(cx,cy,p.r,p.D);
   const{vx,vy}=buildIFPField(cx,cy,p.r,p.ifp);
   const useIFP=p.ifp>0;
+  const lymphSink=getLymphSink();
+  const lymphField=lymphSink>0?buildLymphField(cx,cy,p.r):null;
+  const useNorm=document.getElementById('vascularnorm-toggle').checked&&p.ifp>0;
   const TOTAL_FRAMES=20,stepsPerFrame=Math.max(1,Math.floor(p.steps/TOTAL_FRAMES));
   document.getElementById('status').textContent=useIFP?'Solving PDE (IFP convection active)…':'Solving PDE…';
   let C_nano, C_free;
@@ -1677,11 +1736,19 @@ async function runSim(){
       const stepNum = (i + 1) * stepsPerFrame;
       const pkMode = getPKMode();
       const boundaryC = pkBoundaryC(stepNum - stepsPerFrame, p.steps, pkMode);
-      if (useIFP) pdeChunkIFP(C, Df, rho, vx, vy, dx, dt, p.lam, p.k, p.phi, stepsPerFrame, p.mode, boundaryC, cx, cy, p.r);
-      else pdeChunk(C, Df, rho, dx, dt, p.lam, p.k, p.phi, stepsPerFrame, p.mode, boundaryC, cx, cy, p.r);
+      if (useNorm || useIFP) {
+        const normFactor = useNorm ? getNormalisationFactor(stepNum - stepsPerFrame, p.steps) : 1.0;
+        const rfFactor = getRf() * normFactor;
+        const vxN = Float32Array.from(vx, v => v * rfFactor);
+        const vyN = Float32Array.from(vy, v => v * rfFactor);
+        pdeChunkIFP(C, Df, rho, vxN, vyN, dx, dt, p.lam, p.k, p.phi, stepsPerFrame, p.mode, boundaryC, cx, cy, p.r, lymphField, lymphSink);
+      } else {
+        pdeChunk(C, Df, rho, dx, dt, p.lam, p.k, p.phi, stepsPerFrame, p.mode, boundaryC, cx, cy, p.r, lymphField, lymphSink);
+      }
       animFrames.push({C: new Float32Array(C), step: stepNum});
       document.getElementById('prog').style.width = ((i + 1) / TOTAL_FRAMES * 100).toFixed(0) + '%';
-      document.getElementById('heat-lbl').textContent = `step ${stepNum} / ${p.steps}${useIFP ? ' [IFP]' : ''}`;
+      const _normF = useNorm ? getNormalisationFactor(stepNum - stepsPerFrame, p.steps) : 1.0;
+      document.getElementById('heat-lbl').textContent = `step ${stepNum} / ${p.steps}${(useIFP||useNorm)?' [IFP×'+_normF.toFixed(2)+']':''}${lymphSink>0?' [lymph]':''}`;
       document.getElementById('heat-corner').textContent = `max C = ${Math.max(...C).toFixed(3)}`;
       drawHeatmap('heatmap', C, cx, cy, p.r, 400, 400);
     }
@@ -3306,9 +3373,11 @@ function getReceptorPhi() {
 function onPKModeChange() {
   const mode = document.getElementById('pk-mode-select').value;
   const hints = {
-    constant: 'Boundary C = 1 held constant throughout simulation.',
-    bolus:    'Bolus: C(t) = exp(−t/τ), τ = steps/3. Peak at t=0, decays exponentially.',
-    infusion: 'Infusion: ramp up 0–20% → plateau 20–60% → exponential decay 60–100%.',
+    constant:   'Boundary C = 1 held constant throughout simulation.',
+    bolus:      'Bolus: C(t) = exp(−t/τ), τ = steps/3. Peak at t=0, decays exponentially.',
+    infusion:   'Infusion: ramp up 0–20% → plateau 20–60% → exponential decay 60–100%.',
+    metronomic: 'Metronomic: 12 low-dose cycles (C_peak = 0.2 = 20% MTD dose). Higher cumulative AUC than MTD; sustains vascular normalisation (Nikmaneshi, Jain & Munn, PLoS Comput Biol 2023).',
+    mtd:        'MTD: 2 high-dose boluses (C_peak = 1.0, long inter-dose gap). Compare penetration depth vs metronomic.',
   };
   document.getElementById('pk-hint').textContent = hints[mode];
 }
@@ -3320,16 +3389,76 @@ function pkBoundaryC(step, totalSteps, pkMode) {
     return Math.exp(-t / (1/3)); // τ = 1/3 of total sim time
   }
   if (pkMode === 'infusion') {
-    if (t < 0.2) return t / 0.2;           // ramp up
-    if (t < 0.6) return 1.0;               // plateau
-    return Math.exp(-(t - 0.6) / 0.2);     // exponential decay
+    if (t < 0.2) return t / 0.2;
+    if (t < 0.6) return 1.0;
+    return Math.exp(-(t - 0.6) / 0.2);
   }
+  if (pkMode === 'metronomic') {
+    // 12 low-dose cycles, C_peak = 0.2 (20% MTD per Nikmaneshi, Jain & Munn 2023)
+    const phase = (t % (1/12)) / (1/12);
+    return 0.2 * Math.exp(-phase * 8);
+  }
+  if (pkMode === 'mtd') {
+    // 2 high-dose boluses, C_peak = 1.0, long inter-dose gap
+    const phase = (t % (1/2)) / (1/2);
+    return Math.exp(-phase * 9);
+  }
+  return 1.0;
   return 1.0;
 }
 
 function getPKMode() {
   return document.getElementById('pk-mode-select').value;
 }
+
+/* ── LYMPHATIC SINK ── */
+function syRf(val) {
+  const v = parseFloat(val) / 10;
+  document.getElementById('vrf').textContent = v.toFixed(2);
+}
+function getRf() {
+  return parseFloat(document.getElementById('sl-rf').value) / 10;
+}
+
+function syLymph(val) {
+  const v = parseFloat(val) / 100;
+  document.getElementById('vlymph').textContent = v.toFixed(2);
+  const badge = document.getElementById('lymph-badge');
+  badge.textContent = v > 0 ? 'ON' : 'OFF';
+}
+function getLymphSink() {
+  return parseFloat(document.getElementById('sl-lymph').value) / 100;
+}
+function buildLymphField(cx, cy, r, ringWidth = 2) {
+  const field = new Float32Array(N * N);
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    const d = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2);
+    if (d >= r - ringWidth && d <= r + ringWidth) field[y * N + x] = 1.0;
+  }
+  return field;
+}
+
+/* ── VASCULAR NORMALISATION ── */
+function onVascularNormToggle() {
+  const on = document.getElementById('vascularnorm-toggle').checked;
+  document.getElementById('vascularnorm-params').style.display = on ? '' : 'none';
+  document.getElementById('vascularnorm-badge').textContent = on ? 'ON' : 'OFF';
+  document.getElementById('vascularnorm-badge').className = on ? 'tag purple' : 'tag';
+}
+function getNormalisationFactor(step, totalSteps) {
+  if (!document.getElementById('vascularnorm-toggle').checked) return 1.0;
+  const t = step / totalSteps;
+  const wStart = parseFloat(document.getElementById('sl-norm-start').value) / 100;
+  const wWidth = parseFloat(document.getElementById('sl-norm-width').value) / 100;
+  const reduction = parseFloat(document.getElementById('sl-norm-reduction').value) / 100;
+  const wEnd = wStart + wWidth;
+  if (t >= wStart && t <= wEnd) {
+    const phase = (t - wStart) / wWidth;
+    return 1.0 - reduction * Math.sin(Math.PI * phase);
+  }
+  return 1.0;
+}
+      
 
 </script>
 </body>
