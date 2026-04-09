@@ -435,7 +435,7 @@ var _hmt = _hmt || [];
         <div class="hero-title"><span class="pde">PDE</span><span class="onco">Oncology</span></div>
         <p style="max-width:680px;font-size:.95rem;">A browser-based platform for simulating tumor drug penetration using reaction-diffusion-convection PDEs. Extended in v0.5 with IFP convection transport, experimental validation against published spheroid data, and parameter sweep analysis.</p>
         <div class="formula-box">∂C/∂t = ∇·(D(x,y)∇C) − <span style="color:var(--amber)">v·∇C</span> − λC − k·ρ(x,y)·C − <span style="color:var(--red)">λ_L·δ<sub>∂Ω</sub>·C</span></div>
-        <p style="font-size:.8rem;color:var(--text3);">v0.5: convection term <code style="color:var(--amber);">v·∇C</code> from IFP-driven interstitial flow (Jain 1987). v0.6 adds lymphatic sink, vascular normalisation window, metronomic/MTD dosing, and retardation factor r_f — features directly informed by Nikmaneshi, Jain & Munn (<a href="https://doi.org/10.1371/journal.pcbi.1011131" target="_blank" rel="noopener noreferrer">PLoS Comput Biol 2023 ↗</a>) and personal correspondence with Prof. Jain. <a href="#" onclick="switchTab('validation');return false;">Validated against Thurber et al. 2008 →</a></p>
+        <p style="font-size:.8rem;color:var(--text3);">v0.5: convection term <code style="color:var(--amber);">v·∇C</code> from IFP-driven interstitial flow (Jain 1987). v0.6 adds lymphatic sink, vascular normalisation window, metronomic/MTD dosing, and retardation factor r_f — features conceptually motivated by Nikmaneshi, Jain & Munn (<a href="https://doi.org/10.1371/journal.pcbi.1011131" target="_blank" rel="noopener noreferrer">PLoS Comput Biol 2023 ↗</a>). <a href="#" onclick="switchTab('validation');return false;">Validated against Thurber et al. 2008 →</a></p>
         <div class="hero-chips">
           <span class="hero-chip">FDM · FTCS + upwind</span>
           <span class="hero-chip">80 × 80 grid</span>
@@ -1297,7 +1297,7 @@ var _hmt = _hmt || [];
   </main>
 
   <footer>
-    <span class="footer-logo">PDEOncology v0.5</span>
+   <span class="footer-logo">PDEOncology v0.6</span>
     <span>Tumor Drug Penetration Simulator — research &amp; educational use only</span>
     <div class="cite-box">
       <span class="cite-title">Cite us</span>
@@ -2779,11 +2779,26 @@ function renderResults(){
   }
   drawCurve('result-curve',_curveR,p.r,500,460);
   const modeLabel=p.mode.replace(/_/g,' ');
-  document.getElementById('result-param-body').innerHTML=[
-    ['Diffusion coeff.','D',p.D],['Degradation rate','λ',p.lam],['Uptake rate','k',p.k],
-    ['Tumor radius','r',p.r+' px'],['IFP magnitude','v₀',p.ifp||0],
-    ['Steps','n',p.steps],['Delivery mode','—',modeLabel],
-  ].map(([n,s,v])=>`<tr><td>${n}</td><td><code>${s}</code></td><td>${v}</td></tr>`).join('');
+  const _lymphSink=getLymphSink();
+  const _rf=getRf();
+  const _phi=getReceptorPhi();
+  const _pkMode=getPKMode();
+  const _normOn=document.getElementById('vascularnorm-toggle').checked;
+  const paramRows=[
+    ['Diffusion coeff.','D',p.D],
+    ['Degradation rate','λ',p.lam],
+    ['Uptake rate','k',p.k],
+    ['Tumor radius','r',p.r+' px'],
+    ['IFP magnitude','v₀',p.ifp||0],
+    ['Lymphatic sink','λ_L',_lymphSink>0?_lymphSink:'OFF'],
+    ['Retardation factor','r_f',_rf.toFixed(2)],
+    ['Receptor expression','φ',_phi.toFixed(1)+'×'],
+    ['PK profile','C(t)',_pkMode],
+    ['Vascular normalisation','—',_normOn?'ON':'OFF'],
+    ['Steps','n',p.steps],
+    ['Delivery mode','—',modeLabel],
+  ];
+  document.getElementById('result-param-body').innerHTML=paramRows.map(([n,s,v])=>`<tr><td>${n}</td><td><code>${s}</code></td><td>${v}</td></tr>`).join('');
   const diff=p.D<.03?'severely limited':p.D<.07?'moderately limited':'relatively good';
   const _twoCompActive=document.getElementById('twocomp-toggle').checked;
   const _krelVal=_twoCompActive?(parseFloat(document.getElementById('sl-krel').value)/1000).toFixed(3):'—';
@@ -3137,7 +3152,7 @@ function printReport(){
 <h2>Model Equations</h2>
 ${_twoComp?`
 <div class="formula">∂C_nano/∂t = D_nano·∇²C_nano − κ·C_nano<br>∂C_free/∂t = D_free·∇²C_free + κ·C_nano − λ·C_free − k·φ·ρ·C_free</div>
-<div class="two-comp-box"><strong>Two-compartment nanoparticle release active</strong> (κ = ${_krel}): the nanoparticle depot (D_nano = ${p.D}) diffuses through the ECM and releases active drug at rate κ. Released drug (D_free = ${_dFree}) then diffuses, degrades, and is taken up by cells. All metrics reflect C_free (bioavailable drug).${parseFloat(metrics.maxC)<0.01?' Peak C_free is very small — consider increasing steps or κ.':''}</div>
+<div class="two-comp-box"><strong>Two-compartment nanoparticle release active</strong> (κ = ${_krel}): the nanoparticle depot (D_nano = ${p.D}) diffuses through the ECM and releases active drug at rate κ. Released drug (D_free = ${_dFree}) then diffuses, degrades, and is taken up by cells. All metrics reflect C_free (bioavailable drug).${parseFloat(metrics.maxC)<0.01?' Peak C_free is very small (max < 0.01). This may reflect genuine poor tumour penetration for this formulation, particularly for large NPs in high-IFP tumours. Increasing steps or κ will improve signal for parameter exploration.':''}</div>
 `:`
 <div class="formula">∂C/∂t = ∇·(D(x,y)∇C)${p.ifp>0?' − v·∇C':''} − λC − k·ρ(x,y)·C</div>
 `}
