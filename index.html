@@ -836,7 +836,7 @@ var _hmt = _hmt || [];
       </div>
 
       <!-- Image Upload for ρ field -->
-      <div class="card section">
+      <div class="card section" style="max-width:700px;">
         <div class="card-header"><div class="card-icon amber">🔬</div><h2 style="margin:0;">Image → ρ(x,y) field</h2><span class="tag amber" style="margin-left:auto;">Experimental / Patient-specific</span></div>
         <p>Upload a grayscale histology slice (PNG/JPG) or MRI slices exported from DICOM viewers (PNG/JPG). For MRI: <code>T1-post</code> generates the contrast-enhancement map (thresholded), and <code>T2/FLAIR</code> generates the oedema/tumor mask (thresholded). The app then auto-converts to a spatially-varying cell density field ρ(x,y) using the same blur + threshold pipeline.</p>
         <div class="grid-2" style="gap:1rem;align-items:start;max-width:600px;">
