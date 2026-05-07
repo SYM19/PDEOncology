@@ -839,7 +839,7 @@ var _hmt = _hmt || [];
       <div class="card section">
         <div class="card-header"><div class="card-icon amber">🔬</div><h2 style="margin:0;">Image → ρ(x,y) field</h2><span class="tag amber" style="margin-left:auto;">Experimental / Patient-specific</span></div>
         <p>Upload a grayscale histology slice (PNG/JPG) or MRI slices exported from DICOM viewers (PNG/JPG). For MRI: <code>T1-post</code> generates the contrast-enhancement map (thresholded), and <code>T2/FLAIR</code> generates the oedema/tumor mask (thresholded). The app then auto-converts to a spatially-varying cell density field ρ(x,y) using the same blur + threshold pipeline.</p>
-        <div class="grid-2" style="gap:1rem;align-items:start;">
+        <div class="grid-2" style="gap:1rem;align-items:start;max-width:600px;">
           <div>
             <div style="margin-bottom:12px;">
               <label style="text-transform:none;letter-spacing:0;font-size:.8rem;margin-bottom:6px;">Input type</label>
@@ -1018,7 +1018,7 @@ var _hmt = _hmt || [];
           <span class="tag green" style="margin-left:auto;">Researcher data</span>
         </div>
         <p>Upload your own radial penetration data. Two columns: <code>distance, concentration</code> (header optional). Distance and concentration are auto-normalised. Tune D, λ, k in the Simulation tab to match your formulation, then run validation to compute RMSE.</p>
-        <div class="grid-2" style="gap:1rem;align-items:start;">
+        <div class="grid-2" style="gap:1rem;align-items:start;max-width:600px;">
           <div>
             <div class="upload-zone" id="csv-upload-zone" onclick="document.getElementById('csv-file-input').click()">
               <div style="font-family:var(--mono);font-size:.8rem;color:var(--text3);margin-bottom:.5rem;">Click or drag CSV / TXT</div>
