@@ -77,7 +77,6 @@ var _hmt = _hmt || [];
     strong{color:var(--text);font-weight:600;}
     .section{margin-bottom:2rem;}
     .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
-    #sim-main-grid{grid-template-columns:1fr 1fr;gap:1.5rem;}
     #sim-main-grid{grid-template-columns:340px 1fr;}
     .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;}
     .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;}
@@ -147,7 +146,7 @@ var _hmt = _hmt || [];
     .progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--blue),var(--cyan));border-radius:2px;transition:width .08s linear;}
     .status-line{font-family:var(--mono);font-size:.7rem;color:var(--text3);margin-top:5px;min-height:16px;}
     canvas{display:block;width:100%;}
-    .canvas-box{background:#030507;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;position:relative;max-height:480px;}
+    .canvas-box{background:#030507;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;position:relative;}
     .canvas-overlay{position:absolute;top:8px;left:10px;font-family:var(--mono);font-size:.68rem;color:var(--text3);pointer-events:none;}
     .canvas-corner{position:absolute;bottom:8px;right:10px;font-family:var(--mono);font-size:.65rem;color:var(--text3);pointer-events:none;}
     .colorbar-row{display:flex;align-items:stretch;gap:8px;margin-top:10px;}
@@ -777,7 +776,7 @@ var _hmt = _hmt || [];
           </div>
         </div>
 
-        <div style="max-width:0;">
+        <div>
           <div class="canvas-box" style="aspect-ratio:1;">
             <canvas id="heatmap" width="400" height="400"></canvas>
             <div class="canvas-overlay" id="heat-lbl">ready — press Run</div>
