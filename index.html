@@ -436,7 +436,7 @@ var _hmt = _hmt || [];
     <div id="tab-about" class="tab-panel active">
       <div class="hero section">
         <div class="hero-title"><span class="pde">PDE</span><span class="onco">Oncology</span></div>
-        <p style="max-width:680px;font-size:.95rem;">A browser-based platform for simulating tumor drug penetration using reaction-diffusion-convection PDEs. Extended in v0.5 with IFP convection transport, experimental validation against published spheroid data, and parameter sweep analysis.</p>
+        <p style="max-width:680px;font-size:.95rem;">A browser-based platform for simulating tumor drug penetration using reaction-diffusion-convection PDEs. v0.5 added IFP convection, experimental validation, and parameter sweep. v0.6 adds lymphatic sink, vascular normalisation window, metronomic/MTD dosing, and retardation factor r_f.</p>
         <div class="formula-box">∂C/∂t = ∇·(D(x,y)∇C) − <span style="color:var(--amber)">v·∇C</span> − λC − k·ρ(x,y)·C − <span style="color:var(--red)">λ_L·δ<sub>∂Ω</sub>·C</span></div>
         <p style="font-size:.8rem;color:var(--text3);">v0.5: convection term <code style="color:var(--amber);">v·∇C</code> from IFP-driven interstitial flow (Jain 1987). v0.6 adds lymphatic sink, vascular normalisation window, metronomic/MTD dosing, and retardation factor r_f — features conceptually motivated by Nikmaneshi, Jain & Munn (<a href="https://doi.org/10.1371/journal.pcbi.1011131" target="_blank" rel="noopener noreferrer">PLoS Comput Biol 2023 ↗</a>). <a href="#" onclick="switchTab('validation');return false;">Validated against Thurber et al. 2008 →</a></p>
         <div class="hero-chips">
@@ -456,22 +456,22 @@ var _hmt = _hmt || [];
       
       <hr class="divider"/>
       <div class="section">
-        <h2>What's new in v0.5</h2>
+        <h2>What's new in v0.6</h2>
         <div class="grid-3">
-          <div class="feat-card" style="border-top:2px solid var(--amber);">
-            <div class="feat-icon amber">⟳</div>
-            <h3>IFP Convection</h3>
-            <p>Interstitial fluid pressure modelled via radially-outward Darcy flow (Jain 1987). Adds <code>v·∇C</code> convection term opposing inward drug diffusion. New IFP magnitude slider in Simulation tab.</p>
+          <div class="feat-card" style="border-top:2px solid var(--red);">
+            <div class="feat-icon" style="background:rgba(240,91,91,.1);">⊘</div>
+            <h3>Lymphatic Sink</h3>
+            <p>Boundary-localised extra degradation term <code style="color:var(--red);">λ_L·δ<sub>∂Ω</sub>·C</code> at the tumour periphery ring. Models dysfunctional lymphatic drainage that enforces a low-concentration periphery. Tunable λ_L slider in Simulation tab.</p>
           </div>
-          <div class="feat-card" style="border-top:2px solid var(--green);">
-            <div class="feat-icon green">✓</div>
-            <h3>Experimental Validation</h3>
-            <p>3 digitized spheroid datasets (Thurber et al. 2008, Minchinton & Tannock 2006). Model vs experiment overlay with RMSE. Downloadable validation report. <span class="tag green">RMSE &lt; 0.20 · Dox: 0.062</span></p>
+          <div class="feat-card" style="border-top:2px solid var(--purple);">
+            <div class="feat-icon purple">↷</div>
+            <h3>Vascular Normalisation Window</h3>
+            <p>Time-windowed IFP reduction modelling anti-VEGF–induced normalisation (Jain 2001). Configurable window start, width, and IFP reduction depth. Conceptually motivated by Nikmaneshi, Jain & Munn (PLoS Comput Biol 2023).</p>
           </div>
-          <div class="feat-card" style="border-top:2px solid var(--blue);">
-            <div class="feat-icon blue">◧</div>
-            <h3>Parameter Sweep + Export</h3>
-            <p>5×5 D vs k sweep with coverage heatmap. Python notebook export (NumPy solver + Matplotlib). LaTeX methods snippet. SVG figure export. Histology image → ρ(x,y) field.</p>
+          <div class="feat-card" style="border-top:2px solid var(--cyan);">
+            <div class="feat-icon" style="background:rgba(0,229,255,.08);">⊛</div>
+            <h3>Metronomic / MTD Dosing + r_f</h3>
+            <p>Five boundary PK profiles including low-dose metronomic cycles and MTD bolus schedules. Retardation factor r_f (Nikmaneshi et al. 2023) scales convective transport for large MW drugs and nanoparticles.</p>
           </div>
         </div>
       </div>
@@ -510,7 +510,7 @@ var _hmt = _hmt || [];
     <!-- ══════════════ SIMULATION ══════════════ -->
     <div id="tab-simulation" class="tab-panel">
       <div class="card section">
-        <details open>
+        <details>
           <summary style="cursor:pointer;font-family:var(--mono);font-weight:800;color:var(--blue);letter-spacing:.02em;">
             Parameter Guide &amp; Units
           </summary>
@@ -675,12 +675,19 @@ var _hmt = _hmt || [];
               <input type="range" id="sl-lymph" min="0" max="30" step="1" value="0" oninput="syLymph(this.value)" style="accent-color:var(--red);">
               <span class="slider-val" id="vlymph" style="color:var(--red);">0.00</span>
             </div>
-            <div class="slider-hint">Extra degradation at tumour boundary ring (±2 px). Represents dysfunctional lymphatic drainage enforcing low C at periphery. λ_lymph 0.05–0.20 steepens penetration gradient.</div>
+            <div class="slider-hint">λ_lymph: first-order degradation rate at tumour boundary ring (±2 px). Values 5–15 produce visible steepening; 20–30 enforces near-zero concentration at periphery. Represents dysfunctional lymphatic drainage (Jain et al. 2007).</div>
             <p style="margin:0;font-size:.72rem;color:var(--text3);">Dysfunctional tumour lymphatics are unable to drain interstitial fluid, contributing to elevated IFP and a low-concentration boundary condition at the tumour periphery (Jain et al. 2007).</p>
           </div>
 
+          <!-- ── ADVANCED FEATURES ── -->
+          <details style="margin-top:.875rem;">
+            <summary style="cursor:pointer;font-family:var(--mono);font-size:.8rem;font-weight:700;color:var(--text2);padding:.5rem 0;letter-spacing:.02em;list-style:none;display:flex;align-items:center;gap:8px;">
+              <span style="color:var(--blue);">▸</span> Advanced Biophysics Features
+              <span class="tag" style="font-size:.62rem;margin-left:auto;">vascular norm · receptor · particle size · 2-compartment</span>
+            </summary>
+
           <!-- ── VASCULAR NORMALISATION WINDOW ── -->
-          <div style="background:rgba(167,139,250,.04);border:1px solid rgba(167,139,250,.2);border-radius:var(--radius);padding:.875rem 1rem;margin-top:.875rem;">
+          <div style="background:rgba(167,139,250,.04);margin-top:.875rem;border:1px solid rgba(167,139,250,.2);border-radius:var(--radius);padding:.875rem 1rem;margin-top:.875rem;">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;">
               <label style="margin:0;color:#a78bfa;font-size:.8rem;font-weight:600;text-transform:none;">↷ Vascular Normalisation Window</label>
               <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin:0;text-transform:none;font-size:.75rem;color:var(--text2);">
@@ -764,7 +771,7 @@ var _hmt = _hmt || [];
             </div>
             <p style="margin:4px 0 0;font-size:.72rem;color:var(--text3);">Models encapsulated depot diffusing slowly, releasing active drug at rate κ. Relevant for Abraxane, liposomal formulations.</p>
           </div>
-
+          </details>
           <div class="btn-row">
             <button class="btn btn-primary" id="run-btn" onclick="runSim()">▶ Run simulation</button>
             <button class="btn btn-ghost" onclick="resetSim()">Reset</button>
@@ -885,7 +892,7 @@ var _hmt = _hmt || [];
           <div>
             <div class="canvas-box" id="histo-canvas-box" style="aspect-ratio:1;max-height:300px;"><canvas id="histo-canvas" width="300" height="300"></canvas><div class="canvas-overlay">histo preview</div></div>
             <div class="canvas-box" id="t1-canvas-box" style="aspect-ratio:1;margin-top:6px;display:none;max-height:300px;"><canvas id="t1-canvas" width="300" height="300"></canvas><div class="canvas-overlay">T1-post preview</div></div>
-            <<div class="canvas-box" id="t2-canvas-box" style="aspect-ratio:1;margin-top:6px;display:none;max-height:300px;"><canvas id="t2-canvas" width="300" height="300"></canvas><div class="canvas-overlay">T2/FLAIR preview</div></div>
+            <div class="canvas-box" id="t2-canvas-box" style="aspect-ratio:1;margin-top:6px;display:none;max-height:300px;"><canvas id="t2-canvas" width="300" height="300"></canvas><div class="canvas-overlay">T2/FLAIR preview</div></div>
             <div class="canvas-box" style="aspect-ratio:1;margin-top:6px;max-height:300px;"><canvas id="rho-preview" width="300" height="300"></canvas><div class="canvas-overlay">ρ(x,y) field</div></div>
           </div>
         </div>
@@ -2083,7 +2090,7 @@ h1{color:#1a4d9e;}h2{color:#333;border-bottom:1px solid #ccc;padding-bottom:.5re
 table{width:100%;border-collapse:collapse;}th,td{padding:8px 12px;border:1px solid #ddd;text-align:left;}
 th{background:#f5f5f5;}.rmse-good{color:#1a7a3c;font-weight:bold;}.rmse-ok{color:#b05a00;font-weight:bold;}.rmse-poor{color:#b91c1c;font-weight:bold;}
 </style></head><body>
-<h1>PDEOncology v0.5 — Model Validation Report</h1>
+<h1>PDEOncology v0.6 — Model Validation Report</h1>
 <p>Generated: ${new Date().toISOString()}</p>
 <p>Model validated against 3 published multicellular spheroid datasets. RMSE computed in normalised concentration units over n=8 radial positions per dataset.</p>
 <h2>Validation datasets</h2>
@@ -2821,7 +2828,7 @@ function generateLatex(){
   if(!simResult){alert('Run a simulation first.');return;}
   const{p}=simResult;
   const modeStr={'left_boundary':'left boundary (systemic IV infusion, C|_{x=0} = 1)','ring':'vascular ring','point':'intratumoral point injection'}[p.mode]||p.mode;
-  latexText=`% PDEOncology v0.5 — Auto-generated LaTeX methods snippet
+  latexText=`% PDEOncology v0.6 — Auto-generated LaTeX methods snippet
 % Generated: ${new Date().toLocaleDateString()}
 
 \\subsection{Computational drug penetration model}
@@ -2852,7 +2859,7 @@ Parameters used in this simulation: $D = ${p.D}$, $\\lambda = ${p.lam}$, $k = ${
 tumor radius $R = ${p.r}$ grid units, delivery mode: ${modeStr}.
 Simulation run for ${p.steps} time steps.
 
-All simulations were performed using PDEOncology v0.5 (\\url{https://github.com/SYM19/tumor-drug-penetration-model}).
+All simulations were performed using PDEOncology v0.6 (\\url{https://github.com/SYM19/tumor-drug-penetration-model}).
 
 % References to cite:
 % \\cite{Jain1987} Jain RK. Cancer Res 47(12):3039, 1987.
@@ -2875,7 +2882,7 @@ function exportPython(){
   const{p}=simResult;
   const py=`#!/usr/bin/env python3
 """
-PDEOncology v0.5 — Python Export
+PDEOncology v0.6 — Python Export
 Drug: ${p.drug} | Tumor: ${p.tumor}
 Generated: ${new Date().toISOString()}
 
@@ -3138,7 +3145,7 @@ function printReport(){
 </style></head>
 <body><div class="page">
 <div class="header">
-  <div class="logo">PDE<em>Oncology</em> <span style="font-size:9pt;font-weight:400;color:#888;">v0.5</span></div>
+  <div class="logo">PDE<em>Oncology</em> <span style="font-size:9pt;font-weight:400;color:#888;">v0.6</span></div>
   <div class="meta">Tumor Drug Penetration Simulator · pdeoncology.com · Generated: ${new Date().toLocaleString('en-GB',{dateStyle:'long',timeStyle:'short'})}</div>
 </div>
 
@@ -3206,7 +3213,7 @@ ${_twoComp?`
 
 <div class="note">⚠ Model disclaimer: Parameters are normalised and semi-empirical. Results are for exploratory research use only and are not validated for clinical decision-making. Experimental data points in built-in validation sets are approximate digitizations (±5–10% error).</div>
 
-<div class="disclaimer">PDEOncology v0.5 · Yang ZT, Shi Y. PDEOncology: Tumor Drug Penetration Simulator using Reaction-Diffusion-Convection PDEs with IFP Convection, 2026. · github.com/SYM19/tumor-drug-penetration-model · AGPL-3.0</div>
+<div class="disclaimer">PDEOncology v0.6 · Yang ZT, Shi Y. PDEOncology: Tumor Drug Penetration Simulator using Reaction-Diffusion-Convection PDEs with IFP Convection, 2026. · github.com/SYM19/tumor-drug-penetration-model · AGPL-3.0</div>
 </div></body></html>`;
 
   const w=window.open('','_blank');
@@ -3445,13 +3452,13 @@ function getRf() {
 }
 
 function syLymph(val) {
-  const v = parseFloat(val) / 100;
-  document.getElementById('vlymph').textContent = v.toFixed(2);
+  const v = parseFloat(val);
+  document.getElementById('vlymph').textContent = v.toFixed(0);
   const badge = document.getElementById('lymph-badge');
   badge.textContent = v > 0 ? 'ON' : 'OFF';
 }
 function getLymphSink() {
-  return parseFloat(document.getElementById('sl-lymph').value) / 100;
+  return parseFloat(document.getElementById('sl-lymph').value);
 }
 function buildLymphField(cx, cy, r, ringWidth = 2) {
   const field = new Float32Array(N * N);
