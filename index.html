@@ -436,9 +436,9 @@ var _hmt = _hmt || [];
     <div id="tab-about" class="tab-panel active">
       <div class="hero section">
         <div class="hero-title"><span class="pde">PDE</span><span class="onco">Oncology</span></div>
-        <p style="max-width:680px;font-size:.95rem;">A browser-based platform for simulating tumor drug penetration using reaction-diffusion-convection PDEs. v0.5 added IFP convection, experimental validation, and parameter sweep. v0.6 adds lymphatic sink, vascular normalisation window, metronomic/MTD dosing, and retardation factor r_f.</p>
+        <p style="max-width:680px;font-size:.95rem;">A browser-based platform for simulating tumor drug penetration using reaction-diffusion-convection PDEs. v0.6 added IFP convection, experimental validation, and parameter sweep. v0.6 adds lymphatic sink, vascular normalisation window, metronomic/MTD dosing, and retardation factor r_f.</p>
         <div class="formula-box">∂C/∂t = ∇·(D(x,y)∇C) − <span style="color:var(--amber)">v·∇C</span> − λC − k·ρ(x,y)·C − <span style="color:var(--red)">λ_L·δ<sub>∂Ω</sub>·C</span></div>
-        <p style="font-size:.8rem;color:var(--text3);">v0.5: convection term <code style="color:var(--amber);">v·∇C</code> from IFP-driven interstitial flow (Jain 1987). v0.6 adds lymphatic sink, vascular normalisation window, metronomic/MTD dosing, and retardation factor r_f — features conceptually motivated by Nikmaneshi, Jain & Munn (<a href="https://doi.org/10.1371/journal.pcbi.1011131" target="_blank" rel="noopener noreferrer">PLoS Comput Biol 2023 ↗</a>). <a href="#" onclick="switchTab('validation');return false;">Validated against Thurber et al. 2008 →</a></p>
+        <p style="font-size:.8rem;color:var(--text3);">v0.6: convection term <code style="color:var(--amber);">v·∇C</code> from IFP-driven interstitial flow (Jain 1987). v0.6 adds lymphatic sink, vascular normalisation window, metronomic/MTD dosing, and retardation factor r_f — features conceptually motivated by Nikmaneshi, Jain & Munn (<a href="https://doi.org/10.1371/journal.pcbi.1011131" target="_blank" rel="noopener noreferrer">PLoS Comput Biol 2023 ↗</a>). <a href="#" onclick="switchTab('validation');return false;">Validated against Thurber et al. 2008 →</a></p>
         <div class="hero-chips">
           <span class="hero-chip">FDM · FTCS + upwind</span>
           <span class="hero-chip">80 × 80 grid</span>
@@ -563,25 +563,6 @@ var _hmt = _hmt || [];
                 </tr>
               </tbody>
             </table>
-          </div>
-
-          <div style="margin-top:1rem;">
-            <h3 style="margin-bottom:.5rem;">References</h3>
-            <div class="table-wrap">
-              <table>
-                <thead><tr><th>Link</th></tr></thead>
-                <tbody>
-                  <tr><td><a href="https://pubmed.ncbi.nlm.nih.gov/3555767/" target="_blank" rel="noopener noreferrer">1. Jain RK (1987)</a></td></tr>
-                  <tr><td><a href="https://pubmed.ncbi.nlm.nih.gov/6197161/" target="_blank" rel="noopener noreferrer">2. Nugent LJ &amp; Jain RK (1984)</a></td></tr>
-                  <tr><td><a href="https://doi.org/10.1016/j.addr.2008.04.012" target="_blank" rel="noopener noreferrer">3. Thurber GM et al. (2008)</a></td></tr>
-                  <tr><td><a href="https://doi.org/10.1146/annurev-chembioeng-061010-114300" target="_blank" rel="noopener noreferrer">4. Chauhan VP et al. (2011)</a></td></tr>
-                  <tr><td><a href="https://pubmed.ncbi.nlm.nih.gov/11895922/" target="_blank" rel="noopener noreferrer">5. Tannock IF et al. (2002)</a></td></tr>
-                  <tr><td><a href="https://doi.org/10.1038/nrc1893" target="_blank" rel="noopener noreferrer">6. Minchinton AI &amp; Tannock IF (2006)</a></td></tr>
-                  <tr><td><a href="https://pubmed.ncbi.nlm.nih.gov/17504972/" target="_blank" rel="noopener noreferrer">7. Kyle AH et al. (2007)</a></td></tr>
-                  <tr><td><a href="https://doi.org/10.1073/pnas.1205154109" target="_blank" rel="noopener noreferrer">8. Stylianopoulos T et al. (2012)</a></td></tr>
-                </tbody>
-              </table>
-            </div>
           </div>
         </details>
       </div>
@@ -843,10 +824,10 @@ var _hmt = _hmt || [];
       </div>
 
       <!-- Image Upload for ρ field -->
-      <div class="card section" style="max-width:700px;">
+      <div class="card section">
         <div class="card-header"><div class="card-icon amber">🔬</div><h2 style="margin:0;">Image → ρ(x,y) field</h2><span class="tag amber" style="margin-left:auto;">Experimental / Patient-specific</span></div>
         <p>Upload a grayscale histology slice (PNG/JPG) or MRI slices exported from DICOM viewers (PNG/JPG). For MRI: <code>T1-post</code> generates the contrast-enhancement map (thresholded), and <code>T2/FLAIR</code> generates the oedema/tumor mask (thresholded). The app then auto-converts to a spatially-varying cell density field ρ(x,y) using the same blur + threshold pipeline.</p>
-        <div class="grid-2" style="gap:1rem;align-items:start;max-width:600px;">
+        <div class="grid-2" style="gap:1rem;align-items:start;">
           <div>
             <div style="margin-bottom:12px;">
               <label style="text-transform:none;letter-spacing:0;font-size:.8rem;margin-bottom:6px;">Input type</label>
@@ -967,7 +948,7 @@ var _hmt = _hmt || [];
       <div class="grid-2 section" id="cmp-results" style="display:none;">
         <div class="card">
           <div class="card-header"><div class="card-icon blue">A</div><h2 style="margin:0;color:var(--blue);" id="cmp-title-A">Drug A</h2></div>
-          <div class="canvas-box" style="aspect-ratio:1;"><canvas id="cmp-heatmap-A" width="400" height="400"></canvas></div>
+          <div class="canvas-box" style="aspect-ratio:1;max-height:260px;"><canvas id="cmp-heatmap-A" width="400" height="400" style="height:auto;"></canvas></div>
           <div class="colorbar-row" style="height:28px;margin-top:8px;"><div class="colorbar" style="height:28px;"></div><div class="colorbar-ticks"><span>1.0</span><span>0.5</span><span>0.0</span></div></div>
           <div class="grid-4" style="margin-top:8px;gap:.5rem;">
             <div class="metric"><div class="metric-label">Avg C</div><div class="metric-value" id="cmpA-avg">—</div></div>
@@ -978,7 +959,7 @@ var _hmt = _hmt || [];
         </div>
         <div class="card">
           <div class="card-header"><div class="card-icon green">B</div><h2 style="margin:0;color:var(--green);" id="cmp-title-B">Drug B</h2></div>
-          <div class="canvas-box" style="aspect-ratio:1;"><canvas id="cmp-heatmap-B" width="400" height="400"></canvas></div>
+          <div class="canvas-box" style="aspect-ratio:1;max-height:260px;"><canvas id="cmp-heatmap-B" width="400" height="400" style="height:auto;"></canvas></div>
           <div class="colorbar-row" style="height:28px;margin-top:8px;"><div class="colorbar" style="height:28px;"></div><div class="colorbar-ticks"><span>1.0</span><span>0.5</span><span>0.0</span></div></div>
           <div class="grid-4" style="margin-top:8px;gap:.5rem;">
             <div class="metric"><div class="metric-label">Avg C</div><div class="metric-value" id="cmpB-avg">—</div></div>
@@ -1096,7 +1077,7 @@ var _hmt = _hmt || [];
         <div class="grid-2 section">
           <div class="card">
             <div class="card-header"><div class="card-icon green">◎</div><h2 style="margin:0;">Model vs Experiment</h2></div>
-            <div class="canvas-box" style="height:340px;"><canvas id="val-overlay" width="600" height="340"></canvas></div>
+            <div class="canvas-box"><canvas id="val-overlay" width="600" height="340" style="height:auto;"></canvas></div>
             <div style="display:flex;gap:16px;margin-top:10px;font-family:var(--mono);font-size:.72rem;flex-wrap:wrap;">
               <span style="color:var(--blue);">── Model (PDEOncology)</span>
               <span style="color:var(--amber);">● Experiment (digitized)</span>
@@ -1105,7 +1086,7 @@ var _hmt = _hmt || [];
           </div>
           <div class="card">
             <div class="card-header"><div class="card-icon amber">⊡</div><h2 style="margin:0;">Residual plot</h2></div>
-            <div class="canvas-box" style="height:340px;"><canvas id="val-residual" width="600" height="340"></canvas></div>
+            <div class="canvas-box"><canvas id="val-residual" width="600" height="340" style="height:auto;"></canvas></div>
             <div style="display:flex;gap:16px;margin-top:10px;font-family:var(--mono);font-size:.72rem;">
               <span style="color:var(--red);">● Model − Experiment</span>
               <span style="color:var(--text3);">— Zero line</span>
@@ -1202,7 +1183,7 @@ var _hmt = _hmt || [];
           </div>
           <div class="card">
             <div class="card-header"><div class="card-icon amber">▦</div><h2 style="margin:0;">Tornado — sensitivity</h2></div>
-            <div class="canvas-box" style="height:320px;"><canvas id="sw-tornado" width="560" height="320"></canvas></div>
+            <div class="canvas-box"><canvas id="sw-tornado" width="560" height="320" style="height:auto;"></canvas></div>
           </div>
         </div>
         <div class="card section">
@@ -1231,8 +1212,8 @@ var _hmt = _hmt || [];
           <div class="metric"><div class="metric-label">50% depth</div><div class="metric-value" id="r-depth">—</div><div class="metric-unit">px</div></div>
         </div>
         <div class="grid-2 section">
-          <div class="card"><div class="card-header"><div class="card-icon">🌡</div><h2 style="margin:0;">Concentration heatmap</h2></div><div class="canvas-box"><canvas id="result-heatmap" width="500" height="460"></canvas></div></div>
-          <div class="card"><div class="card-header"><div class="card-icon">📈</div><h2 style="margin:0;">Radial penetration curve</h2></div><div class="canvas-box"><canvas id="result-curve" width="500" height="460"></canvas></div></div>
+          <div class="card"><div class="card-header"><div class="card-icon">🌡</div><h2 style="margin:0;">Concentration heatmap</h2></div><div class="canvas-box" style="aspect-ratio:1;max-height:340px;"><canvas id="result-heatmap" width="400" height="400" style="height:auto;"></canvas></div></div>
+          <div class="card"><div class="card-header"><div class="card-icon">📈</div><h2 style="margin:0;">Radial penetration curve</h2></div><div class="canvas-box" style="max-height:280px;"><canvas id="result-curve" width="500" height="280" style="height:auto;"></canvas></div></div>
         </div>
         <div class="card section"><div class="card-header"><div class="card-icon">⚙</div><h2 style="margin:0;">Simulation parameters</h2></div><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Symbol</th><th>Value</th></tr></thead><tbody id="result-param-body"></tbody></table></div></div>
         <div class="card section"><div class="card-header"><div class="card-icon green">✦</div><h2 style="margin:0;">Report summary</h2></div><div id="report-text" style="font-size:.875rem;line-height:1.85;color:var(--text2);"></div></div>
@@ -2009,7 +1990,8 @@ function displayValidationResult(datasetIdx){
 
 function drawValidationOverlay(canvasId,modelCurve,expPoints,tumorR,profile){
   const canvas=document.getElementById(canvasId);if(!canvas)return;
-  const W=600,H=340;canvas.width=W;canvas.height=H;
+  const W=Math.max(380,canvas.parentElement.clientWidth-4||600),H=Math.round(W*0.56);
+  canvas.width=W;canvas.height=H;
   const ctx=canvas.getContext('2d');ctx.fillStyle='#030507';ctx.fillRect(0,0,W,H);
   const pad={l:52,r:24,t:20,b:44},cW=W-pad.l-pad.r,cH=H-pad.t-pad.b;
   const maxDepth=tumorR+2;
@@ -2055,7 +2037,8 @@ function drawValidationOverlay(canvasId,modelCurve,expPoints,tumorR,profile){
 
 function drawResidualPlot(canvasId,profile){
   const canvas=document.getElementById(canvasId);if(!canvas)return;
-  const W=600,H=340;canvas.width=W;canvas.height=H;
+  const W=Math.max(380,canvas.parentElement.clientWidth-4||600),H=Math.round(W*0.56);
+  canvas.width=W;canvas.height=H;
   const ctx=canvas.getContext('2d');ctx.fillStyle='#030507';ctx.fillRect(0,0,W,H);
   const pad={l:52,r:24,t:20,b:44},cW=W-pad.l-pad.r,cH=H-pad.t-pad.b;
   const maxDepth=Math.max(...profile.map(p=>p.depth))+2;
@@ -2472,7 +2455,7 @@ function renderSweepResults(results,Dvals,kvals,metric){
     const r=Math.round(13+t*26),g=Math.round(50+t*170),b=Math.round(20+t*90);
     return`rgb(${r},${g},${b})`;
   }
-  const n=5,cellPx=56;
+  const n=5,cellPx=68;
   let html=`<div style="display:flex;gap:4px;align-items:flex-start;padding:.5rem;">`;
   // Y axis label
   html+=`<div style="display:flex;flex-direction:column;justify-content:space-between;height:${n*cellPx+n*4}px;margin-right:8px;">`;
@@ -2513,7 +2496,8 @@ function renderSweepResults(results,Dvals,kvals,metric){
 
 function drawTornadoPlot(results,Dvals,kvals,metric){
   const canvas=document.getElementById('sw-tornado');if(!canvas)return;
-  const W=560,H=320;canvas.width=W;canvas.height=H;
+  const W=Math.max(400,canvas.parentElement.clientWidth-4||560),H=Math.round(W*0.57);
+  canvas.width=W;canvas.height=H;
   const ctx=canvas.getContext('2d');ctx.fillStyle='#030507';ctx.fillRect(0,0,W,H);
   // Compute marginal effects: for each D value, mean metric; for each k value, mean metric
   const n=5;
@@ -2781,13 +2765,13 @@ function renderResults(){
   document.getElementById('r-depth').textContent=metrics.depth50;
   const _maxR=Math.max(...C);
   const _CR=_maxR>0&&_maxR<0.05?C.map(v=>v/_maxR):C;
-  drawHeatmap('result-heatmap',_CR,cx,cy,p.r,500,460);
+  drawHeatmap('result-heatmap',_CR,cx,cy,p.r,400,400);
   const _maxCurve=Math.max(...curve);
   let _curveR=_maxCurve>0&&_maxCurve<0.05?curve.map(v=>v/_maxCurve):curve;
   if(_maxCurve>0&&_maxCurve<0.05){
     _curveR=_curveR.map((v,i,a)=>i===0||i===a.length-1?v:(v+a[i-1]+a[i+1])/3);
   }
-  drawCurve('result-curve',_curveR,p.r,500,460);
+  drawCurve('result-curve',_curveR,p.r,500,280);
   const modeLabel=p.mode.replace(/_/g,' ');
   const _lymphSink=getLymphSink();
   const _rf=getRf();
@@ -3061,7 +3045,7 @@ function exportSVGFigure(){
   svg+=`<rect x="${pad.l}" y="${pad.t+4}" width="180" height="56" fill="#111820" rx="4" opacity="0.9"/>`;
   svg+=`<text x="${pad.l+8}" y="${pad.t+18}" fill="#8b9bb4" font-size="9">D=${p.D} · λ=${p.lam} · k=${p.k}</text>`;
   svg+=`<text x="${pad.l+8}" y="${pad.t+30}" fill="#8b9bb4" font-size="9">r=${p.r}px · steps=${p.steps}</text>`;
-  svg+=`<text x="${pad.l+8}" y="${pad.t+42}" fill="#8b9bb4" font-size="9">PDEOncology v0.5</text>`;
+  svg+=`<text x="${pad.l+8}" y="${pad.t+42}" fill="#8b9bb4" font-size="9">PDEOncology v0.6</text>`;
   svg+=`<text x="${pad.l+8}" y="${pad.t+54}" fill="#4d5f73" font-size="8">github.com/SYM19/tumor-drug-penetration-model</text>`;
   svg+=`</svg>`;
   const blob=new Blob([svg],{type:'image/svg+xml'});
@@ -3071,7 +3055,7 @@ function exportSVGFigure(){
 function exportCSV(){
   if(!simResult)return;
   const{curve,metrics,p}=simResult;
-  const header=`# PDEOncology v0.5\n# Date: ${new Date().toISOString()}\n# Drug: ${p.drug} | Tumor: ${p.tumor} | Mode: ${p.mode}\n# D=${p.D} | lambda=${p.lam} | k=${p.k} | r=${p.r} | steps=${p.steps} | IFP=${p.ifp||0}\n# tumor_avg_C=${metrics.tumorAvg} | coverage=${metrics.coverage}% | depth50=${metrics.depth50}px\n`;
+  const header=`# PDEOncology v0.6\n# Date: ${new Date().toISOString()}\n# Drug: ${p.drug} | Tumor: ${p.tumor} | Mode: ${p.mode}\n# D=${p.D} | lambda=${p.lam} | k=${p.k} | r=${p.r} | steps=${p.steps} | IFP=${p.ifp||0}\n# tumor_avg_C=${metrics.tumorAvg} | coverage=${metrics.coverage}% | depth50=${metrics.depth50}px\n`;
   const rows=[['r_px','mean_C'],...curve.map((v,i)=>[i,v.toFixed(6)])];
   const csv=header+rows.map(r=>r.join(',')).join('\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
@@ -3083,7 +3067,7 @@ function exportPhysiCell(){
   const dx=1/N;
   const data={
     software:'PDEOncology',
-    version:'0.5',
+    version:'0.6',
     grid:{N,dx},
     indexing:'row-major (y*N + x)',
     fields:{
