@@ -765,6 +765,12 @@ var _hmt = _hmt || [];
         </div>
 
         <div>
+          <div id="receptor-view-row" style="display:none;margin-bottom:8px;">
+            <span style="font-family:var(--mono);font-size:.7rem;color:var(--text2);margin-right:6px;">View field:</span>
+            <button class="btn btn-primary" id="view-free-btn" onclick="setHeatmapView('free')" style="padding:4px 12px;font-size:.72rem;">Free C</button>
+            <button class="btn btn-ghost" id="view-bound-btn" onclick="setHeatmapView('bound')" style="padding:4px 12px;font-size:.72rem;">Bound B</button>
+            <span class="tag blue" style="font-size:.65rem;margin-left:6px;">receptor binding active</span>
+          </div>
           <div class="canvas-box" style="aspect-ratio:1;max-height:440px;max-width:440px;margin:0 auto;">
             <canvas id="heatmap" width="400" height="400"></canvas>
             <div class="canvas-overlay" id="heat-lbl">ready — press Run</div>
@@ -1326,8 +1332,8 @@ const DB=[
   {drug:'Gemcitabine',tumor:'pancreatic',D:.025,lam:.009,k:.035,r:28,diff:'very high',cls:'Antimetabolite'},
   {drug:'Gemcitabine',tumor:'breast',D:.07,lam:.005,k:.055,r:22,diff:'medium',cls:'Antimetabolite'},
   {drug:'Gemcitabine',tumor:'colorectal',D:.06,lam:.006,k:.05,r:24,diff:'medium',cls:'Antimetabolite'},
-  {drug:'Trastuzumab',tumor:'breast',D:.01,lam:.001,k:.12,r:22,diff:'medium',cls:'Monoclonal Ab'},
-  {drug:'Trastuzumab',tumor:'pancreatic',D:.005,lam:.002,k:.08,r:28,diff:'very high',cls:'Monoclonal Ab'},
+  {drug:'Trastuzumab',tumor:'breast',D:.01,lam:.001,k:.12,r:22,diff:'medium',cls:'Monoclonal Ab',receptorBinding:true,kon:0.30,koff:0.005,Bmax:1.0,kdeg:0.01,note:'HER2 two-state binding. kon=0.30, koff=0.005 (Kd≈0.017, normalised). Thurber et al. 2008; Adams et al. 2001.'},
+  {drug:'Trastuzumab',tumor:'pancreatic',D:.005,lam:.002,k:.08,r:28,diff:'very high',cls:'Monoclonal Ab',receptorBinding:true,kon:0.30,koff:0.005,Bmax:0.8,kdeg:0.01,note:'Pancreatic: lower Bmax reflects lower HER2 expression.'},
   {drug:'5-Fluorouracil',tumor:'colorectal',D:.11,lam:.004,k:.075,r:24,diff:'low',cls:'Antimetabolite'},
   {drug:'5-Fluorouracil',tumor:'breast',D:.10,lam:.004,k:.07,r:22,diff:'low',cls:'Antimetabolite'},
   {drug:'Temozolomide',tumor:'glioma',D:.18,lam:.002,k:.06,r:20,diff:'low',cls:'Alkylating agent'},
@@ -1384,6 +1390,7 @@ let valResults={}; // cache all 3 RMSE values
    STATE
    ========================================================= */
 let simResult=null, aiParams=null, apiKey='';
+let heatmapView='free'; // 'free' = C field, 'bound' = B field (receptor binding mode only)
 let animFrames=[], animIdx=0, animTimer=null, animParams=null;
 let histoImageData=null, mriT1ImageData=null, mriT2ImageData=null, customRhoField=null;
 let sweepData=null, cmpLastResult=null;let simAborted = false;
@@ -1688,6 +1695,8 @@ async function runSim(){
   // CFL: account for IFP velocity
   const twoComp = getTwoCompEnabled();
   const krel = getKrel();
+  const receptorBinding = !twoComp && isReceptorBindingDrug();
+  let B_field = null; // populated by receptor binding branch
   // D_free = 10×D_nano — must govern CFL when two-compartment is active
   const D_cfl = twoComp ? Math.min(0.25, p.D * 10) : p.D;
   const dtDiff = dx*dx / (4*D_cfl + 1e-10);
@@ -1726,6 +1735,34 @@ async function runSim(){
     }
     // Use C_free as the output C for metrics/results
     C.set(C_free);
+  } else if (receptorBinding) {
+    /* ── RECEPTOR BINDING KINETICS BRANCH ──────────────────────────────
+       Coupled ∂C/∂t + ∂B/∂t PDE. C = free drug (diffuses, in metrics).
+       B = bound drug (immobile, peripheral trap). B_field passed to simResult. */
+    const rbP=getReceptorBindingParams();
+    const{kon,koff,Bmax,kdeg}=rbP;
+    const B=new Float32Array(N*N); // bound drug field, starts at zero
+    document.getElementById('receptor-view-row').style.display='';
+    animFrames.push({C:new Float32Array(C),B:new Float32Array(B),step:0});
+    for(let i=0;i<TOTAL_FRAMES;i++){
+      await new Promise(r=>setTimeout(r,0));
+      if(simAborted) return;
+      const stepNum=(i+1)*stepsPerFrame;
+      const pkMode=getPKMode();
+      const boundaryC=pkBoundaryC(stepNum-stepsPerFrame,p.steps,pkMode);
+      const normFactor=useNorm?getNormalisationFactor(stepNum-stepsPerFrame,p.steps):1.0;
+      const rfFactor=getRf()*normFactor;
+      const vxN=Float32Array.from(vx,v=>v*rfFactor);
+      const vyN=Float32Array.from(vy,v=>v*rfFactor);
+      pdeChunkReceptor(C,B,Df,rho,vxN,vyN,dx,dt,p.lam,kon,koff,Bmax,kdeg,stepsPerFrame,p.mode,boundaryC,cx,cy,p.r,lymphField,lymphSink,useIFP||useNorm);
+      animFrames.push({C:new Float32Array(C),B:new Float32Array(B),step:stepNum});
+      document.getElementById('prog').style.width=((i+1)/TOTAL_FRAMES*100).toFixed(0)+'%';
+      const _normF=useNorm?getNormalisationFactor(stepNum-stepsPerFrame,p.steps):1.0;
+      document.getElementById('heat-lbl').textContent=`step ${stepNum} [receptor binding]${useIFP?' [IFP×'+_normF.toFixed(2)+']':''}`;
+      document.getElementById('heat-corner').textContent=`max C=${Math.max(...C).toFixed(3)} | max B=${Math.max(...B).toFixed(3)}`;
+      drawHeatmap('heatmap',heatmapView==='bound'?B:C,cx,cy,p.r,400,400);
+    }
+    B_field=B; // hand off to simResult below
   } else {
     animFrames.push({C: new Float32Array(C), step: 0});
     for (let i = 0; i < TOTAL_FRAMES; i++) {
@@ -1765,17 +1802,31 @@ async function runSim(){
   const _finalMax=twoComp?C_free.reduce((a,b)=>a>b?a:b,0):Math.max(...Array.from(C).slice(0,100));
   const _autoNote=twoComp&&_finalMax<0.05?` · C_free auto-scaled (max=${_finalMax.toFixed(4)}) — increase steps for larger values`:'';
   document.getElementById('status').textContent='Complete ✓ — animation ready'+_autoNote;
-  document.getElementById('heat-lbl').textContent=`done — ${p.steps} steps${useIFP?' [IFP]':''}`;
-  simResult={C:Array.from(C),curve:Array.from(curve),metrics,p,Df:Array.from(Df),rho:Array.from(rho),vx:Array.from(vx),vy:Array.from(vy)};
+  document.getElementById('heat-lbl').textContent=`done — ${p.steps} steps${useIFP?' [IFP]':''}${receptorBinding?' [receptor binding · toggle ↑]':''}`;
+  simResult={C:Array.from(C),B:B_field?Array.from(B_field):null,curve:Array.from(curve),metrics,p,Df:Array.from(Df),rho:Array.from(rho),vx:Array.from(vx),vy:Array.from(vy),receptorBinding};
   animParams={cx,cy,r:p.r,totalSteps:p.steps};
   const scrub=document.getElementById('anim-scrub');scrub.max=animFrames.length-1;scrub.value=0;
   animIdx=0;document.getElementById('anim-panel').style.display='';renderAnimFrame(0);
   document.getElementById('export-btn').disabled=false;
   btn.disabled=false;btn.textContent='▶ Run simulation';
 }
+function setHeatmapView(view){
+  heatmapView=view;
+  document.getElementById('view-free-btn').className=view==='free'?'btn btn-primary':'btn btn-ghost';
+  document.getElementById('view-bound-btn').className=view==='bound'?'btn btn-primary':'btn btn-ghost';
+  if(!simResult) return;
+  const cx=Math.floor(N/3),cy=N/2;
+  const arr=(view==='bound'&&simResult.B)?simResult.B:simResult.C;
+  drawHeatmap('heatmap',arr,cx,cy,simResult.p.r,400,400);
+  if(animFrames.length) renderAnimFrame(animIdx);
+}
 function resetSim(){
   simAborted = true;
+  heatmapView='free';
   stopAnim(); animFrames=[]; animIdx=0; animParams=null;
+  document.getElementById('receptor-view-row').style.display='none';
+  document.getElementById('view-free-btn').className='btn btn-primary';
+  document.getElementById('view-bound-btn').className='btn btn-ghost';
   document.getElementById('anim-panel').style.display='none';
   document.getElementById('play-btn').textContent='▶ Play';
   document.getElementById('run-btn').disabled=false;
@@ -1799,9 +1850,10 @@ function resetSim(){
 function renderAnimFrame(idx){
   if(!animFrames.length||!animParams) return;
   idx=Math.max(0,Math.min(idx,animFrames.length-1));animIdx=idx;
-  const{C,step}=animFrames[idx];const{cx,cy,r,totalSteps}=animParams;
-  const _mf=C.reduce((a,b)=>a>b?a:b,0);
-  const _dc=_mf>0&&_mf<0.05?C.map(v=>v/_mf):C;
+  const{C,B,step}=animFrames[idx];const{cx,cy,r,totalSteps}=animParams;
+  const dispArr=(B&&heatmapView==='bound')?B:C;
+  const _mf=dispArr.reduce((a,b)=>a>b?a:b,0);
+  const _dc=_mf>0&&_mf<0.05?dispArr.map(v=>v/_mf):dispArr;
   drawHeatmap('anim-heatmap',_dc,cx,cy,r,400,400);
   const curve=radialCurve(C,cx,cy);
   const _animMax=Math.max(...curve);
@@ -2396,10 +2448,49 @@ function readExcel(file){
       C_free.set(C_free2);
     }
   }
-
   
+/* =========================================================
+   RECEPTOR BINDING KINETICS PDE SOLVER
+   ========================================================= */
+/* Two-state binding model (Thurber et al. 2008):
+   ∂C/∂t = D∇²C − ∇·(v·C) − λC − kon·C·(Bmax−B) + koff·B
+   ∂B/∂t = kon·C·(Bmax−B) − koff·B − kdeg·B
+   C = free drug (diffuses + convects), B = bound/internalised (immobile).
+   Captures binding-site barrier effect in antibody/ADC penetration. */
+function pdeChunkReceptor(C,B,Df,rho,vx,vy,dx,dt,lam,kon,koff,Bmax,kdeg,steps,mode,boundaryC,cx,cy,r,lymphField,lymphSink,useIFP){
+  const C2=new Float32Array(N*N),B2=new Float32Array(N*N);
+  for(let s=0;s<steps;s++){
+    for(let y=1;y<N-1;y++) for(let x=1;x<N-1;x++){
+      const i=y*N+x,ci=C[i],bi=B[i];
+      // Laplacian of free drug
+      const lapC=(C[(y-1)*N+x]+C[(y+1)*N+x]+C[y*N+(x-1)]+C[y*N+(x+1)]-4*ci)/(dx*dx);
+      // Receptor kinetics
+      const avail=Math.max(0,Bmax-bi);   // unsaturated binding sites
+      const binding=kon*ci*avail;         // free → bound
+      const release=koff*bi;              // bound → free (dissociation)
+      const internalise=kdeg*bi;          // bound → degraded
+      // IFP convection on C only
+      let convX=0,convY=0;
+      if(useIFP){
+        const vxi=vx[i],vyi=vy[i];
+        convX=vxi>0?vxi*(ci-C[y*N+(x-1)])/dx:vxi*(C[y*N+(x+1)]-ci)/dx;
+        convY=vyi>0?vyi*(ci-C[(y-1)*N+x])/dx:vyi*(C[(y+1)*N+x]-ci)/dx;
+      }
+      const lymphTerm=(lymphField&&lymphSink>0)?lymphSink*lymphField[i]*ci:0;
+      // Update free drug
+      C2[i]=Math.max(0,ci+dt*(Df[i]*lapC-convX-convY-lam*ci-binding+release-lymphTerm));
+      // Update bound drug (no spatial transport — immobile once bound)
+      B2[i]=Math.max(0,bi+dt*(binding-release-internalise));
+    }
+    // Boundary conditions for C (B has zero-flux — bound drug can't leave)
+    if(mode==='left_boundary'){for(let y=0;y<N;y++){C2[y*N]=boundaryC;C2[y*N+N-1]=0;}for(let x=0;x<N;x++){C2[x]=0;C2[(N-1)*N+x]=0;}}
+    else if(mode==='outer_boundary'){for(let y=0;y<N;y++){C2[y*N]=1;C2[y*N+N-1]=1;}for(let x=0;x<N;x++){C2[x]=1;C2[(N-1)*N+x]=1;}}
+    else if(mode==='tumor_surface'){for(let y=0;y<N;y++) for(let x=0;x<N;x++) if(Math.abs(Math.sqrt((x-cx)**2+(y-cy)**2)-r)<1.5) C2[y*N+x]=boundaryC;}
+    else if(mode==='ring'){const rv=r+5;for(let y=0;y<N;y++) for(let x=0;x<N;x++) if(Math.abs(Math.sqrt((x-cx)**2+(y-cy)**2)-rv)<2) C2[y*N+x]=boundaryC;}
+    C.set(C2);B.set(B2);
+  }
+}
 
-  
 /* =========================================================
    PARAMETER SWEEP
    ========================================================= */
@@ -3381,6 +3472,23 @@ function syReceptor(val) {
 }
 function getReceptorPhi() {
   return parseFloat(document.getElementById('sl-receptor').value) / 10;
+}
+
+/* ── RECEPTOR BINDING DETECTION ── */
+function isReceptorBindingDrug(){
+  const drug=document.getElementById('drug-select').value;
+  const tumor=document.getElementById('tumor-select').value;
+  const nk=name=>name.toLowerCase().replace(/\s*\([^)]*\)/g,'').trim().replace(/[\s\-]+/g,'_');
+  const entry=DB.find(d=>nk(d.drug)===drug&&d.tumor===tumor)||DB.find(d=>nk(d.drug)===drug);
+  return !!(entry&&entry.receptorBinding);
+}
+function getReceptorBindingParams(){
+  const drug=document.getElementById('drug-select').value;
+  const tumor=document.getElementById('tumor-select').value;
+  const nk=name=>name.toLowerCase().replace(/\s*\([^)]*\)/g,'').trim().replace(/[\s\-]+/g,'_');
+  const entry=DB.find(d=>nk(d.drug)===drug&&d.tumor===tumor)||DB.find(d=>nk(d.drug)===drug);
+  if(!entry||!entry.receptorBinding) return null;
+  return{kon:entry.kon,koff:entry.koff,Bmax:entry.Bmax,kdeg:entry.kdeg};
 }
 
   /* =========================================================
