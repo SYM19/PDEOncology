@@ -1685,7 +1685,11 @@ function calcMetrics(C,cx,cy,r){
    RUN SIMULATION
    ========================================================= */
 async function runSim(){
-  simAborted = false; 
+  simAborted = false;
+  heatmapView='free';
+  document.getElementById('receptor-view-row').style.display='none';
+  document.getElementById('view-free-btn').className='btn btn-primary';
+  document.getElementById('view-bound-btn').className='btn btn-ghost';
   const btn=document.getElementById('run-btn');btn.disabled=true;btn.textContent='⟳ Running…';
   document.getElementById('export-btn').disabled=true;
   document.getElementById('anim-panel').style.display='none';
