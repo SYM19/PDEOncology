@@ -1332,8 +1332,8 @@ const DB=[
   {drug:'Gemcitabine',tumor:'pancreatic',D:.025,lam:.009,k:.035,r:28,diff:'very high',cls:'Antimetabolite'},
   {drug:'Gemcitabine',tumor:'breast',D:.07,lam:.005,k:.055,r:22,diff:'medium',cls:'Antimetabolite'},
   {drug:'Gemcitabine',tumor:'colorectal',D:.06,lam:.006,k:.05,r:24,diff:'medium',cls:'Antimetabolite'},
-  {drug:'Trastuzumab',tumor:'breast',D:.01,lam:.001,k:.12,r:22,diff:'medium',cls:'Monoclonal Ab',receptorBinding:true,kon:0.30,koff:0.005,Bmax:1.0,kdeg:0.01,note:'HER2 two-state binding. kon=0.30, koff=0.005 (Kd≈0.017, normalised). Thurber et al. 2008; Adams et al. 2001.'},
-  {drug:'Trastuzumab',tumor:'pancreatic',D:.005,lam:.002,k:.08,r:28,diff:'very high',cls:'Monoclonal Ab',receptorBinding:true,kon:0.30,koff:0.005,Bmax:0.8,kdeg:0.01,note:'Pancreatic: lower Bmax reflects lower HER2 expression.'},
+  {drug:'Trastuzumab',tumor:'breast',D:.01,lam:.001,k:.12,r:22,diff:'medium',cls:'Monoclonal Ab',receptorBinding:true,kon:1.5,koff:0.005,Bmax:1.0,kdeg:0.01,note:'HER2 two-state binding. Da=kon·Bmax·R²/D≈11. Strong binding-site barrier regime. Thurber et al. 2008; Adams et al. 2001.'},
+  {drug:'Trastuzumab',tumor:'pancreatic',D:.005,lam:.002,k:.08,r:28,diff:'very high',cls:'Monoclonal Ab',receptorBinding:true,kon:1.5,koff:0.005,Bmax:0.8,kdeg:0.01,note:'Pancreatic: lower Bmax reflects lower HER2 expression. Da≈14.'},
   {drug:'5-Fluorouracil',tumor:'colorectal',D:.11,lam:.004,k:.075,r:24,diff:'low',cls:'Antimetabolite'},
   {drug:'5-Fluorouracil',tumor:'breast',D:.10,lam:.004,k:.07,r:22,diff:'low',cls:'Antimetabolite'},
   {drug:'Temozolomide',tumor:'glioma',D:.18,lam:.002,k:.06,r:20,diff:'low',cls:'Alkylating agent'},
@@ -1764,7 +1764,8 @@ async function runSim(){
       const _normF=useNorm?getNormalisationFactor(stepNum-stepsPerFrame,p.steps):1.0;
       document.getElementById('heat-lbl').textContent=`step ${stepNum} [receptor binding]${useIFP?' [IFP×'+_normF.toFixed(2)+']':''}`;
       document.getElementById('heat-corner').textContent=`max C=${Math.max(...C).toFixed(3)} | max B=${Math.max(...B).toFixed(3)}`;
-      drawHeatmap('heatmap',heatmapView==='bound'?B:C,cx,cy,p.r,400,400);
+      if(heatmapView==='bound'){const _bm=B.reduce((a,b)=>a>b?a:b,0);drawHeatmap('heatmap',_bm>0?B.map(v=>v/_bm):B,cx,cy,p.r,400,400);}
+      else{drawHeatmap('heatmap',C,cx,cy,p.r,400,400);}
     }
     B_field=B; // hand off to simResult below
   } else {
@@ -1820,7 +1821,13 @@ function setHeatmapView(view){
   document.getElementById('view-bound-btn').className=view==='bound'?'btn btn-primary':'btn btn-ghost';
   if(!simResult) return;
   const cx=Math.floor(N/3),cy=N/2;
-  const arr=(view==='bound'&&simResult.B)?simResult.B:simResult.C;
+  let arr;
+  if(view==='bound'&&simResult.B){
+    const _bm=Math.max(...simResult.B);
+    arr=_bm>0?simResult.B.map(v=>v/_bm):simResult.B;
+  } else {
+    arr=simResult.C;
+  }
   drawHeatmap('heatmap',arr,cx,cy,simResult.p.r,400,400);
   if(animFrames.length) renderAnimFrame(animIdx);
 }
@@ -1855,9 +1862,14 @@ function renderAnimFrame(idx){
   if(!animFrames.length||!animParams) return;
   idx=Math.max(0,Math.min(idx,animFrames.length-1));animIdx=idx;
   const{C,B,step}=animFrames[idx];const{cx,cy,r,totalSteps}=animParams;
-  const dispArr=(B&&heatmapView==='bound')?B:C;
-  const _mf=dispArr.reduce((a,b)=>a>b?a:b,0);
-  const _dc=_mf>0&&_mf<0.05?dispArr.map(v=>v/_mf):dispArr;
+  let _dc;
+  if(B&&heatmapView==='bound'){
+    const _bm=B.reduce((a,b)=>a>b?a:b,0);
+    _dc=_bm>0?B.map(v=>v/_bm):B;
+  } else {
+    const _mf=C.reduce((a,b)=>a>b?a:b,0);
+    _dc=_mf>0&&_mf<0.05?C.map(v=>v/_mf):C;
+  }
   drawHeatmap('anim-heatmap',_dc,cx,cy,r,400,400);
   const curve=radialCurve(C,cx,cy);
   const _animMax=Math.max(...curve);
