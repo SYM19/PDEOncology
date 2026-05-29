@@ -3685,6 +3685,8 @@ async function runSensitivity(){
   const results=[];
   const total=params.length*2;
   let count=0;
+  // Fixed baseline physical time — keeps D×t constant across perturbations so D sensitivity is real
+  const dt_base=Math.min(dx*dx/(4*p.D+1e-10),p.ifp>0?dx/(p.ifp+1e-10):Infinity)*0.9;
   for(const param of params){
     const row={name:param.name,sym:param.sym,base:param.base,loMetrics:null,hiMetrics:null};
     for(const[tag,val] of [['lo',param.lo],['hi',param.hi]]){
@@ -3698,18 +3700,24 @@ async function runSensitivity(){
       else if(param.sym==='k') pp.k=val;
       else if(param.sym==='r') pp.r=val;
       else if(param.sym==='v₀') pp.ifp=val;
+      // CFL-safe dt for perturbed D; scale steps to maintain constant physical time
       const dt=Math.min(dx*dx/(4*pp.D+1e-10),pp.ifp>0?dx/(pp.ifp+1e-10):Infinity)*0.9;
+      const sensiSteps=Math.max(50,Math.round(pp.steps*dt_base/dt));
       const C=initC(pp.mode,cx,cy,pp.r);
       const rho=buildRho(cx,cy,pp.r,null);
       const Df=buildDField(cx,cy,pp.r,pp.D);
       if(pp.ifp>0){
         const{vx,vy}=buildIFPField(cx,cy,pp.r,pp.ifp);
-        pdeChunkIFP(C,Df,rho,vx,vy,dx,dt,pp.lam,pp.k,p.phi,pp.steps,pp.mode,1,cx,cy,pp.r);
+        pdeChunkIFP(C,Df,rho,vx,vy,dx,dt,pp.lam,pp.k,p.phi,sensiSteps,pp.mode,1,cx,cy,pp.r);
       } else {
-        pdeChunk(C,Df,rho,dx,dt,pp.lam,pp.k,p.phi,pp.steps,pp.mode,1,cx,cy,pp.r);
+        pdeChunk(C,Df,rho,dx,dt,pp.lam,pp.k,p.phi,sensiSteps,pp.mode,1,cx,cy,pp.r);
       }
       const m=calcMetrics(C,cx,cy,pp.r);
-      const mf={tumorAvg:parseFloat(m.tumorAvg),coverage:parseFloat(m.coverage),depth50:m.depth50};
+      // Compute raw unrounded average for sub-0.001 SI detection
+      let _rawSum=0,_rawCnt=0;
+      for(let _y=0;_y<N;_y++) for(let _x=0;_x<N;_x++)
+        if(Math.sqrt((_x-cx)**2+(_y-cy)**2)<=pp.r){_rawSum+=C[_y*N+_x];_rawCnt++;}
+      const mf={tumorAvg:_rawCnt>0?_rawSum/_rawCnt:0,coverage:parseFloat(m.coverage),depth50:m.depth50};
       if(tag==='lo') row.loMetrics=mf; else row.hiMetrics=mf;
     }
     const b=baseline.tumorAvg||0.001;
