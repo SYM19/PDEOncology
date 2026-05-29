@@ -609,11 +609,11 @@ var _hmt = _hmt || [];
           </div>
           
           <hr class="divider" style="margin:.875rem 0;"/>
-          <div class="slider-row"><span class="slider-name">D · diffusion</span><button type="button" class="help-btn" aria-label="Help for D" onclick="openSliderHelp('D',this)">?</button><input type="range" id="sl-D" min="0.1" max="25" step="0.1" value="8" oninput="sy('D',this.value)"><span class="slider-val" id="vD">0.08</span></div>
+          <div class="slider-row"><span class="slider-name">D · diffusion <span style="font-size:.6rem;color:var(--text3);font-weight:400;">(μm²/s)</span></span><button type="button" class="help-btn" aria-label="Help for D" onclick="openSliderHelp('D',this)">?</button><input type="range" id="sl-D" min="0.1" max="25" step="0.1" value="8" oninput="sy('D',this.value)"><span class="slider-val" id="vD">0.08</span></div>
           <div class="slider-hint">D (diffusion coefficient): 0.005–0.25 (normalised vs free diffusion in water ≈ 10−5 cm2/s). Small molecules (e.g. doxorubicin) ≈ 0.08; large antibodies ≈ 0.01.</div>
-          <div class="slider-row"><span class="slider-name">λ · decay</span><button type="button" class="help-btn" aria-label="Help for λ" onclick="openSliderHelp('lam',this)">?</button><input type="range" id="sl-lam" min="1" max="50" step="1" value="5" oninput="sy('lam',this.value)"><span class="slider-val" id="vlam">0.005</span></div>
+          <div class="slider-row"><span class="slider-name">λ · decay <span style="font-size:.6rem;color:var(--text3);font-weight:400;">(s⁻¹)</span></span><button type="button" class="help-btn" aria-label="Help for λ" onclick="openSliderHelp('lam',this)">?</button><input type="range" id="sl-lam" min="1" max="50" step="1" value="5" oninput="sy('lam',this.value)"><span class="slider-val" id="vlam">0.005</span></div>
           <div class="slider-hint">λ (degradation rate): 0.001–0.05 (normalised 1/time). Reflects metabolic clearance.</div>
-          <div class="slider-row"><span class="slider-name">k · uptake</span><button type="button" class="help-btn" aria-label="Help for k" onclick="openSliderHelp('k',this)">?</button><input type="range" id="sl-k" min="1" max="15" step="1" value="6" oninput="sy('k',this.value)"><span class="slider-val" id="vk">0.06</span></div>
+          <div class="slider-row"><span class="slider-name">k · uptake <span style="font-size:.6rem;color:var(--text3);font-weight:400;">(s⁻¹)</span></span><button type="button" class="help-btn" aria-label="Help for k" onclick="openSliderHelp('k',this)">?</button><input type="range" id="sl-k" min="1" max="15" step="1" value="6" oninput="sy('k',this.value)"><span class="slider-val" id="vk">0.06</span></div>
           <div class="slider-hint">k (cellular uptake rate): 0.01–0.15 (normalised). Depends on receptor/transporter expression.</div>
           <div class="slider-row"><span class="slider-name">r · radius</span><button type="button" class="help-btn" aria-label="Help for tumor radius" onclick="openSliderHelp('r',this)">?</button><input type="range" id="sl-r" min="10" max="38" step="1" value="22" oninput="sy('r',this.value)"><span class="slider-val" id="vr">22 px</span></div>
           <div class="slider-hint">Tumor radius: 10–38 px (≈ 0.125–0.475 cm on the 1 cm tissue section).</div>
@@ -628,7 +628,7 @@ var _hmt = _hmt || [];
               <span style="font-family:var(--mono);font-size:.65rem;color:var(--text3);">Jain 1987 · Darcy's law</span>
             </div>
             <div class="slider-row" style="margin-bottom:4px;">
-              <span class="slider-name" style="color:var(--amber);">IFP magnitude</span>
+              <span class="slider-name" style="color:var(--amber);">IFP magnitude <span style="font-size:.6rem;color:var(--text3);font-weight:400;">(mmHg)</span></span>
               <button type="button" class="help-btn" aria-label="Help for IFP magnitude" onclick="openSliderHelp('ifp',this)">?</button>
               <input type="range" id="sl-ifp" min="0" max="15" step="1" value="0" oninput="sy('ifp',this.value)" style="accent-color:var(--amber);">
               <span class="slider-val" id="vifp" style="color:var(--amber);">0.00</span>
@@ -1438,20 +1438,20 @@ function sy(id,v){
    ========================================================= */
 const PARAM_HELP={
   D:{
-    title:'D (diffusion coefficient)',
-    meaning:'Higher D speeds drug spreading through the extracellular matrix (smaller molecules penetrate faster than large antibodies).',
+    title:'D (diffusion coefficient) — units: μm²/s',
+    meaning:'Higher D speeds drug spreading through the ECM. Real tissue values: small molecules (doxorubicin, cisplatin) ≈ 50–300 μm²/s; IgG antibodies ≈ 5–20 μm²/s; nanoparticles ≈ 0.1–5 μm²/s. Normalised slider maps 0.005–0.25 to this range.',
     refLabel:'Jain RK (1987)',
     refUrl:'https://pubmed.ncbi.nlm.nih.gov/3555767/',
   },
   lam:{
-    title:'λ (degradation rate)',
-    meaning:'Higher λ reduces effective drug lifetime in tissue via metabolic clearance and loss processes.',
+    title:'λ (degradation rate) — units: s⁻¹ (normalised)',
+    meaning:'Higher λ reduces effective drug lifetime. Typical plasma half-lives: doxorubicin ~30 min (k_elim ≈ 3.9×10⁻⁴ s⁻¹); cisplatin ~30–90 min; trastuzumab ~28 days (very low λ). Slider range 0.001–0.05 spans this in model-time units.',
     refLabel:'Chauhan VP et al. (2011)',
     refUrl:'https://doi.org/10.1146/annurev-chembioeng-061010-114300',
   },
   k:{
-    title:'k (cellular uptake rate)',
-    meaning:'Higher k increases receptor/transporter-mediated uptake and retention (e.g., HER2-driven trends for trastuzumab).',
+    title:'k (cellular uptake rate) — units: s⁻¹ (normalised)',
+    meaning:'Higher k increases receptor/transporter-mediated uptake. Calibrated against spheroid data: doxorubicin ≈ 0.06, trastuzumab ≈ 0.12 (high HER2 affinity), cisplatin ≈ 0.08. For ADCs, k scales with receptor copy number × internalisation rate.',
     refLabel:'Thurber GM et al. (2008)',
     refUrl:'https://doi.org/10.1016/j.addr.2008.04.012',
   },
@@ -1462,8 +1462,8 @@ const PARAM_HELP={
     refUrl:'https://pubmed.ncbi.nlm.nih.gov/11895922/',
   },
   ifp:{
-    title:'IFP magnitude (v₀)',
-    meaning:'Higher IFP strengthens outward convection that opposes inward diffusion, acting as a transport barrier.',
+    title:'IFP magnitude (v₀) — units: mmHg (scaled)',
+    meaning:'Elevated IFP drives outward Darcy flow opposing inward drug diffusion. Typical values: normal tissue 0–2 mmHg; breast tumour 5–15 mmHg; pancreatic/colorectal 20–40 mmHg. Slider 0.00–0.15 maps to this physiological range via Darcy scaling.',
     refLabel:'Stylianopoulos T et al. (2012)',
     refUrl:'https://doi.org/10.1073/pnas.1205154109',
   },
