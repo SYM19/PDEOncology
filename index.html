@@ -1224,6 +1224,47 @@ var _hmt = _hmt || [];
         <div class="card section"><div class="card-header"><div class="card-icon">⚙</div><h2 style="margin:0;">Simulation parameters</h2></div><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Symbol</th><th>Value</th></tr></thead><tbody id="result-param-body"></tbody></table></div></div>
         <div class="card section"><div class="card-header"><div class="card-icon green">✦</div><h2 style="margin:0;">Report summary</h2></div><div id="report-text" style="font-size:.875rem;line-height:1.85;color:var(--text2);"></div></div>
 
+        <!-- ── SENSITIVITY ANALYSIS ── -->
+        <div class="card section" id="sensitivity-card" style="display:none;">
+          <div class="card-header">
+            <div class="card-icon amber">◈</div>
+            <h2 style="margin:0;">One-at-a-time Sensitivity Analysis</h2>
+            <span class="tag amber" style="margin-left:auto;">OAT · ±20% perturbation</span>
+          </div>
+          <p style="font-size:.82rem;color:var(--text2);margin-bottom:.75rem;">Each parameter is independently perturbed ±20% from its current baseline while all others are held constant. SI = |C(+20%) − C(−20%)| ÷ (2 × baseline). Ranked by impact — supports a sensitivity analysis section in your methods.</p>
+          <div class="btn-row" style="margin-top:0;">
+            <button class="btn btn-amber" id="sensi-run-btn" onclick="runSensitivity()">▶ Run sensitivity analysis</button>
+            <button class="btn btn-ghost" id="sensi-export-btn" onclick="exportSensitivityCSV()" disabled>⬇ Export CSV</button>
+          </div>
+          <div class="progress-wrap">
+            <div class="progress-track"><div class="progress-fill" id="sensi-prog"></div></div>
+            <div class="status-line" id="sensi-status"></div>
+          </div>
+          <div id="sensi-results" style="display:none;margin-top:1rem;">
+            <div class="grid-2" style="gap:1rem;margin-bottom:1rem;">
+              <div class="card" style="padding:.875rem;">
+                <div style="font-size:.68rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.75rem;">Sensitivity Tornado</div>
+                <div class="canvas-box"><canvas id="sensi-tornado" width="480" height="280" style="height:auto;"></canvas></div>
+                <div style="font-family:var(--mono);font-size:.65rem;color:var(--text3);margin-top:6px;">● amber = −20% result · ● blue = +20% result · bar = total range</div>
+              </div>
+              <div class="card" style="padding:.875rem;">
+                <div style="font-size:.68rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.75rem;">Sensitivity table — tumour avg C</div>
+                <div class="table-wrap">
+                  <table>
+                    <thead><tr><th>Parameter</th><th>−20%</th><th>Baseline</th><th>+20%</th><th>SI</th></tr></thead>
+                    <tbody id="sensi-tbody"></tbody>
+                  </table>
+                </div>
+                <p style="font-size:.68rem;color:var(--text3);margin-top:.5rem;margin-bottom:0;">SI = |C(+20%)−C(−20%)| ÷ (2×baseline). Larger = stronger influence on delivery.</p>
+              </div>
+            </div>
+            <div class="card" style="padding:.875rem;">
+              <div style="font-size:.68rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem;">Interpretation</div>
+              <div id="sensi-interpretation" style="font-size:.875rem;line-height:1.85;color:var(--text2);"></div>
+            </div>
+          </div>
+        </div>
+
         <!-- Manuscript exports -->
         <div class="card section" style="border:1px solid rgba(77,158,255,.3);">
           <div class="card-header"><div class="card-icon blue">📝</div><h2 style="margin:0;">Manuscript-ready exports</h2><span class="tag blue" style="margin-left:auto;">Journal ready</span></div>
@@ -1404,7 +1445,7 @@ let simResult=null, aiParams=null, apiKey='';
 let heatmapView='free'; // 'free' = C field, 'bound' = B field (receptor binding mode only)
 let animFrames=[], animIdx=0, animTimer=null, animParams=null;
 let histoImageData=null, mriT1ImageData=null, mriT2ImageData=null, customRhoField=null;
-let sweepData=null, cmpLastResult=null;let simAborted = false;
+let sweepData=null, cmpLastResult=null, sensiData=null;let simAborted = false;
 
 /* =========================================================
    INIT
@@ -2875,6 +2916,13 @@ function renderResults(){
   if(!simResult)return;
   document.getElementById('results-empty').style.display='none';
   document.getElementById('results-content').style.display='';
+  document.getElementById('sensitivity-card').style.display='';
+  document.getElementById('sensi-results').style.display='none';
+  document.getElementById('sensi-prog').style.width='0%';
+  document.getElementById('sensi-status').textContent='';
+  document.getElementById('sensi-export-btn').disabled=true;
+  document.getElementById('sensi-run-btn').textContent='▶ Run sensitivity analysis';
+  sensiData=null;
   const{C,curve,metrics,p}=simResult,cx=Math.floor(N/3),cy=N/2;
   document.getElementById('r-drug').textContent=p.drug;
   document.getElementById('r-tumor').textContent=p.tumor;
@@ -3608,6 +3656,167 @@ function getNormalisationFactor(step, totalSteps) {
   return 1.0;
 }
       
+
+/* =========================================================
+   SENSITIVITY ANALYSIS — OAT ±20% perturbation
+   ========================================================= */
+async function runSensitivity(){
+  if(!simResult) return;
+  const btn=document.getElementById('sensi-run-btn');
+  btn.disabled=true; btn.textContent='⟳ Running…';
+  document.getElementById('sensi-results').style.display='none';
+  document.getElementById('sensi-export-btn').disabled=true;
+  document.getElementById('sensi-prog').style.width='0%';
+  const p=simResult.p;
+  const cx=Math.floor(N/3),cy=N/2,dx=1/N;
+  const baseline={
+    tumorAvg:parseFloat(simResult.metrics.tumorAvg),
+    coverage:parseFloat(simResult.metrics.coverage),
+    depth50:simResult.metrics.depth50
+  };
+  const PERTURB=0.20;
+  const params=[
+    {name:'D (diffusion)', sym:'D',  base:p.D,   lo:p.D*(1-PERTURB),   hi:p.D*(1+PERTURB)},
+    {name:'λ (decay)',     sym:'λ',  base:p.lam, lo:p.lam*(1-PERTURB), hi:p.lam*(1+PERTURB)},
+    {name:'k (uptake)',    sym:'k',  base:p.k,   lo:p.k*(1-PERTURB),   hi:p.k*(1+PERTURB)},
+    {name:'r (radius)',    sym:'r',  base:p.r,   lo:Math.max(8,Math.round(p.r*(1-PERTURB))), hi:Math.min(38,Math.round(p.r*(1+PERTURB)))},
+  ];
+  if(p.ifp>0) params.push({name:'IFP (v₀)',sym:'v₀',base:p.ifp,lo:p.ifp*(1-PERTURB),hi:p.ifp*(1+PERTURB)});
+  const results=[];
+  const total=params.length*2;
+  let count=0;
+  for(const param of params){
+    const row={name:param.name,sym:param.sym,base:param.base,loMetrics:null,hiMetrics:null};
+    for(const[tag,val] of [['lo',param.lo],['hi',param.hi]]){
+      count++;
+      document.getElementById('sensi-prog').style.width=(count/total*100).toFixed(0)+'%';
+      document.getElementById('sensi-status').textContent=`${param.name} ${tag==='lo'?'−20%':'+20%'}… (${count}/${total})`;
+      await new Promise(res=>setTimeout(res,0));
+      const pp={...p};
+      if(param.sym==='D') pp.D=val;
+      else if(param.sym==='λ') pp.lam=val;
+      else if(param.sym==='k') pp.k=val;
+      else if(param.sym==='r') pp.r=val;
+      else if(param.sym==='v₀') pp.ifp=val;
+      const dt=Math.min(dx*dx/(4*pp.D+1e-10),pp.ifp>0?dx/(pp.ifp+1e-10):Infinity)*0.9;
+      const C=initC(pp.mode,cx,cy,pp.r);
+      const rho=buildRho(cx,cy,pp.r,null);
+      const Df=buildDField(cx,cy,pp.r,pp.D);
+      if(pp.ifp>0){
+        const{vx,vy}=buildIFPField(cx,cy,pp.r,pp.ifp);
+        pdeChunkIFP(C,Df,rho,vx,vy,dx,dt,pp.lam,pp.k,p.phi,pp.steps,pp.mode,1,cx,cy,pp.r);
+      } else {
+        pdeChunk(C,Df,rho,dx,dt,pp.lam,pp.k,p.phi,pp.steps,pp.mode,1,cx,cy,pp.r);
+      }
+      const m=calcMetrics(C,cx,cy,pp.r);
+      const mf={tumorAvg:parseFloat(m.tumorAvg),coverage:parseFloat(m.coverage),depth50:m.depth50};
+      if(tag==='lo') row.loMetrics=mf; else row.hiMetrics=mf;
+    }
+    const b=baseline.tumorAvg||0.001;
+    row.SI=Math.abs(row.hiMetrics.tumorAvg-row.loMetrics.tumorAvg)/(2*b);
+    results.push(row);
+  }
+  results.sort((a,b2)=>b2.SI-a.SI);
+  sensiData={results,baseline};
+  document.getElementById('sensi-prog').style.width='100%';
+  document.getElementById('sensi-status').textContent=`Complete ✓ — ${results.length} parameters analysed`;
+  _renderSensitivityResults(results,baseline);
+  document.getElementById('sensi-results').style.display='';
+  document.getElementById('sensi-export-btn').disabled=false;
+  btn.disabled=false; btn.textContent='▶ Run sensitivity analysis';
+}
+function _renderSensitivityResults(results,baseline){
+  const b=baseline.tumorAvg;
+  document.getElementById('sensi-tbody').innerHTML=results.map(r=>{
+    const loColor=r.loMetrics.tumorAvg<b?'var(--red)':'var(--green)';
+    const hiColor=r.hiMetrics.tumorAvg>b?'var(--green)':'var(--red)';
+    const tagClass=r.SI>0.3?'amber':r.SI>0.1?'blue':'';
+    return`<tr>
+      <td><strong>${r.name}</strong></td>
+      <td style="font-family:var(--mono);font-size:.8rem;color:${loColor};">${r.loMetrics.tumorAvg.toFixed(3)}</td>
+      <td style="font-family:var(--mono);font-size:.8rem;"><strong>${b.toFixed(3)}</strong></td>
+      <td style="font-family:var(--mono);font-size:.8rem;color:${hiColor};">${r.hiMetrics.tumorAvg.toFixed(3)}</td>
+      <td><span class="tag ${tagClass}">${r.SI.toFixed(3)}</span></td>
+    </tr>`;
+  }).join('');
+  _drawSensitivityTornado(document.getElementById('sensi-tornado'),results,baseline);
+  const most=results[0],least=results[results.length-1];
+  const regimeMap={D:'diffusion-dominated — ECM tortuosity is the primary bottleneck',λ:'clearance-dominated — plasma half-life is the main constraint',k:'uptake-dominated — receptor/transporter expression drives delivery efficacy',r:'geometry-limited — tumour radius governs the diffusion length scale',v₀:'convection-dominated — IFP is the dominant transport barrier'};
+  const regime=regimeMap[most.sym]||'parameter-sensitive';
+  document.getElementById('sensi-interpretation').innerHTML=`
+    <p><strong>Most influential:</strong> ${most.name} (SI = ${most.SI.toFixed(3)}) — a ±20% perturbation shifts tumour average C by ${(most.SI*200).toFixed(1)}% relative to baseline. The model is in a <strong>${regime}</strong>.</p>
+    <p><strong>Least influential:</strong> ${least.name} (SI = ${least.SI.toFixed(3)}) — less than ${(least.SI*200).toFixed(1)}% change per ±20% perturbation. This parameter can be assigned with lower precision without significantly affecting model output.</p>
+    <p><strong>Note:</strong> This is an OAT (one-at-a-time) local sensitivity analysis — parameter interactions are not captured. For D×k interaction surface, see the Sweep tab. OAT does not apply to the receptor binding (kon/koff/Bmax) or two-compartment (κ) parameters, which use separate solver branches.</p>
+    <p style="font-size:.78rem;color:var(--text3);">For your paper: SI values may be reported as a local sensitivity analysis. Cite as: each parameter was independently perturbed ±20% from its nominal value; SI = |f(p×1.2) − f(p×0.8)| / (2f(p)) where f is tumour average concentration.</p>`;
+}
+function _drawSensitivityTornado(canvas,results,baseline){
+  const n=results.length;
+  const W=480,H=Math.max(200,n*54+62);
+  canvas.width=W;canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#030507';ctx.fillRect(0,0,W,H);
+  const pad={l:112,r:72,t:28,b:28};
+  const cW=W-pad.l-pad.r,cH=H-pad.t-pad.b;
+  const rowH=cH/n,barH=Math.min(22,rowH-10);
+  const b=baseline.tumorAvg||0.001;
+  const maxDelta=Math.max(...results.map(r=>Math.max(Math.abs(r.loMetrics.tumorAvg-b),Math.abs(r.hiMetrics.tumorAvg-b))))*1.35||0.05;
+  const cx_=pad.l+cW/2;
+  // Grid lines
+  ctx.strokeStyle='rgba(99,130,166,.07)';ctx.lineWidth=.5;
+  [-1,-.5,0,.5,1].forEach(f=>{
+    const x=cx_+f*(cW/2);
+    ctx.beginPath();ctx.moveTo(x,pad.t);ctx.lineTo(x,pad.t+cH);ctx.stroke();
+    if(f!==0){ctx.fillStyle='rgba(99,130,166,.35)';ctx.font='8px Space Mono,monospace';ctx.textAlign='center';
+      const val=f*maxDelta;ctx.fillText((val>0?'+':'')+val.toFixed(3),x,pad.t-6);}
+  });
+  // Baseline centre line
+  ctx.strokeStyle='rgba(99,130,166,.35)';ctx.setLineDash([3,3]);ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(cx_,pad.t);ctx.lineTo(cx_,pad.t+cH);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='rgba(99,130,166,.5)';ctx.font='700 8px Space Mono,monospace';ctx.textAlign='center';
+  ctx.fillText('baseline',cx_,pad.t-6);
+  // Title + x-axis label
+  ctx.font='9px Space Mono,monospace';ctx.fillStyle='rgba(99,130,166,.4)';ctx.textAlign='center';
+  ctx.fillText('Δ tumour avg C',W/2,H-8);
+  results.forEach((r,i)=>{
+    const y=pad.t+i*rowH+(rowH-barH)/2;
+    const loDelta=r.loMetrics.tumorAvg-b;
+    const hiDelta=r.hiMetrics.tumorAvg-b;
+    const loX=cx_+(loDelta/maxDelta)*(cW/2);
+    const hiX=cx_+(hiDelta/maxDelta)*(cW/2);
+    const barL=Math.min(loX,hiX),barR=Math.max(loX,hiX);
+    const alpha=0.12+0.55*(r.SI/(results[0].SI||1));
+    ctx.fillStyle=`rgba(77,158,255,${alpha.toFixed(2)})`;
+    ctx.fillRect(barL,y,barR-barL,barH);
+    ctx.strokeStyle=`rgba(77,158,255,${Math.min(1,alpha+0.3).toFixed(2)})`;ctx.lineWidth=1;
+    ctx.strokeRect(barL,y,barR-barL,barH);
+    ctx.fillStyle='#f0a54a';ctx.beginPath();ctx.arc(loX,y+barH/2,4.5,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#4d9eff';ctx.beginPath();ctx.arc(hiX,y+barH/2,4.5,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=i===0?'var(--text)':'rgba(139,155,180,.85)';
+    ctx.font=`${i===0?'700':'400'} 10px Space Mono,monospace`;
+    ctx.textAlign='right';ctx.fillText(r.name,pad.l-7,y+barH/2+3.5);
+    ctx.fillStyle='rgba(99,130,166,.55)';ctx.font='9px Space Mono,monospace';ctx.textAlign='left';
+    ctx.fillText(`SI=${r.SI.toFixed(3)}`,Math.max(barR,cx_)+5,y+barH/2+3.5);
+  });
+  ctx.textAlign='left';
+}
+function exportSensitivityCSV(){
+  if(!sensiData)return;
+  const{results,baseline}=sensiData;
+  const rows=[
+    ['parameter','base_value','low20_tumorAvg','baseline_tumorAvg','high20_tumorAvg','SI',
+     'low20_coverage','baseline_coverage','high20_coverage',
+     'low20_depth50','baseline_depth50','high20_depth50'],
+    ...results.map(r=>[
+      r.name,r.base.toFixed(5),
+      r.loMetrics.tumorAvg.toFixed(4),baseline.tumorAvg.toFixed(4),r.hiMetrics.tumorAvg.toFixed(4),r.SI.toFixed(4),
+      r.loMetrics.coverage.toFixed(2),baseline.coverage.toFixed(2),r.hiMetrics.coverage.toFixed(2),
+      r.loMetrics.depth50,baseline.depth50,r.hiMetrics.depth50,
+    ])
+  ];
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([rows.map(r=>r.join(',')).join('\n')],{type:'text/csv'}));
+  a.download='PDEOncology_sensitivity.csv';a.click();
+}
 
 /* =========================================================
    CONVERGENCE TEST — window.runConvergenceTest() in console
