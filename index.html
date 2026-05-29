@@ -1304,6 +1304,17 @@ var _hmt = _hmt || [];
   </footer>
   <div id="help-overlay" class="help-overlay" onclick="closeSliderHelp()"></div>
   <div id="help-pop" class="help-pop" role="dialog" aria-modal="true" aria-hidden="true"></div>
+  <!-- ── CONVERGENCE TEST OVERLAY ── -->
+  <div id="conv-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9990;align-items:center;justify-content:center;">
+    <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:1.25rem 1.5rem;max-width:740px;width:95vw;box-shadow:0 20px 80px rgba(0,0,0,.5);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.875rem;">
+        <span style="font-family:var(--mono);font-size:.85rem;font-weight:700;color:var(--blue);">Grid Convergence Test <span style="color:var(--text3);font-weight:400;">[dev]</span></span>
+        <button class="btn btn-ghost" style="padding:3px 10px;font-size:.72rem;" onclick="document.getElementById('conv-overlay').style.display='none'">✕ Close</button>
+      </div>
+      <div class="canvas-box" style="margin-bottom:.75rem;"><canvas id="conv-canvas" width="680" height="360"></canvas></div>
+      <div style="font-family:var(--mono);font-size:.72rem;color:var(--text3);" id="conv-status">Idle.</div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -3598,6 +3609,106 @@ function getNormalisationFactor(step, totalSteps) {
 }
       
 
+/* =========================================================
+   CONVERGENCE TEST — window.runConvergenceTest() in console
+   Runs current params at N=40, 80, 160. Plots overlaid radial
+   profiles. Reports RMSE(80→160) as convergence metric.
+   ========================================================= */
+window.runConvergenceTest = async function(){
+  const p=getParams();
+  const GRIDS=[40,80,160];
+  const COLORS=['#f0a54a','#4d9eff','#3de383'];
+  const LABELS=['40×40 (coarse)','80×80 (production)','160×160 (fine)'];
+  const overlay=document.getElementById('conv-overlay');
+  const status=document.getElementById('conv-status');
+  const canvas=document.getElementById('conv-canvas');
+  overlay.style.display='flex';
+  status.textContent='Starting…';
+  const curves=[];
+  for(let gi=0;gi<GRIDS.length;gi++){
+    const n=GRIDS[gi];
+    status.textContent=`Running ${n}×${n}…`;
+    await new Promise(r=>setTimeout(r,0));
+    const cx=Math.floor(n/3),cy=Math.floor(n/2);
+    const rn=Math.round(p.r*n/80);
+    const dx=1/n;
+    const dt=0.9*dx*dx/(4*p.D+1e-10);
+    // Scale steps so all grids simulate the same physical time
+    // dt_n = 0.9/(4D*n²) → steps_n = steps_80 * n²/80²
+    const physSteps=Math.max(50,Math.round(p.steps*(n*n)/(80*80)));
+    // Init C
+    const C=new Float32Array(n*n);
+    if(p.mode==='ring'){const rv=rn+Math.round(5*n/80);for(let y=0;y<n;y++)for(let x=0;x<n;x++)if(Math.abs(Math.sqrt((x-cx)**2+(y-cy)**2)-rv)<Math.max(1.5,2*n/80))C[y*n+x]=1;}
+    else if(p.mode==='left_boundary'){for(let y=0;y<n;y++)C[y*n]=1;}
+    else if(p.mode==='point'){C[cy*n+cx]=1;}
+    // Build fields
+    const rho=new Float32Array(n*n),Df=new Float32Array(n*n);
+    for(let y=0;y<n;y++)for(let x=0;x<n;x++){
+      const d=Math.sqrt((x-cx)**2+(y-cy)**2);
+      rho[y*n+x]=d<=rn?Math.max(.05,1-.5*(d/rn)):Math.max(.05,.1+.4*Math.exp(-(d-rn)/(rn*.3)));
+      Df[y*n+x]=d<=rn?p.D*(.4+.6*d/rn):p.D;
+    }
+    // Solve in chunks
+    const C2=new Float32Array(n*n);
+    const CHUNKS=6,chunkSz=Math.max(1,Math.floor(physSteps/CHUNKS));
+    for(let ci=0;ci<CHUNKS;ci++){
+      await new Promise(r=>setTimeout(r,0));
+      for(let s=0;s<chunkSz;s++){
+        for(let y=1;y<n-1;y++)for(let x=1;x<n-1;x++){
+          const i=y*n+x,lap=(C[(y-1)*n+x]+C[(y+1)*n+x]+C[y*n+(x-1)]+C[y*n+(x+1)]-4*C[i])/(dx*dx);
+          C2[i]=Math.max(0,C[i]+dt*(Df[i]*lap-p.lam*C[i]-p.k*rho[i]*C[i]));
+        }
+        if(p.mode==='left_boundary'){for(let y=0;y<n;y++){C2[y*n]=1;C2[y*n+n-1]=0;}for(let x=0;x<n;x++){C2[x]=0;C2[(n-1)*n+x]=0;}}
+        else if(p.mode==='ring'){const rv=rn+Math.round(5*n/80);for(let y=0;y<n;y++)for(let x=0;x<n;x++)if(Math.abs(Math.sqrt((x-cx)**2+(y-cy)**2)-rv)<Math.max(1.5,2*n/80))C2[y*n+x]=1;}
+        C.set(C2);
+      }
+    }
+    // Radial curve
+    const maxR=Math.floor(n/2),sum=new Float64Array(maxR),cnt=new Int32Array(maxR);
+    for(let y=0;y<n;y++)for(let x=0;x<n;x++){const d=Math.floor(Math.sqrt((x-cx)**2+(y-cy)**2));if(d<maxR){sum[d]+=C[y*n+x];cnt[d]++;}}
+    curves.push({curve:Array.from(sum.map((v,i)=>cnt[i]>0?v/cnt[i]:0)),n,r:rn});
+  }
+  // RMSE between 80 and 160 (interpolated to same axis)
+  const c80=curves[1].curve,c160=curves[2].curve;
+  let sq=0,ct=0;
+  for(let i=0;i<c80.length;i++){const j=Math.round(i*160/80);if(j<c160.length){const e=c80[i]-c160[j];sq+=e*e;ct++;}}
+  const rmse=Math.sqrt(sq/ct);
+  // Draw
+  _drawConvergencePlot(canvas,curves,COLORS,LABELS,rmse);
+  status.textContent=`Done ✓  |  RMSE(80→160) = ${rmse.toFixed(4)}  |  ${rmse<0.02?'Grid converged ✓ — production resolution is adequate':'Consider grid refinement for this D value'}`;
+};
+function _drawConvergencePlot(canvas,curves,colors,labels,rmse){
+  const W=680,H=340;canvas.width=W;canvas.height=H;
+  const ctx=canvas.getContext('2d');ctx.fillStyle='#030507';ctx.fillRect(0,0,W,H);
+  const pad={l:52,r:20,t:38,b:44},cW=W-pad.l-pad.r,cH=H-pad.t-pad.b;
+  ctx.fillStyle='rgba(139,155,180,.7)';ctx.font='700 11px Space Mono,monospace';
+  ctx.fillText('Grid Convergence Test',pad.l,20);
+  ctx.fillStyle=rmse<0.02?'var(--green)':'var(--amber)';ctx.font='10px Space Mono,monospace';
+  ctx.fillText(`RMSE(80→160) = ${rmse.toFixed(4)}  ${rmse<0.02?'✓ converged':'⚠ refine?'}`,pad.l+200,20);
+  ctx.strokeStyle='rgba(99,130,166,.08)';ctx.lineWidth=.5;
+  for(let i=0;i<=5;i++){const y=pad.t+cH*(1-i/5);ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+cW,y);ctx.stroke();ctx.fillStyle='rgba(99,130,166,.5)';ctx.font='10px Space Mono,monospace';ctx.fillText((i/5).toFixed(1),4,y+4);}
+  // Draw curves normalised to fractional grid position on x-axis
+  curves.forEach(({curve,n,r},ci)=>{
+    const maxR=curve.length;
+    // Tumor wall for 80-grid only
+    if(ci===1){const tx=pad.l+(r/maxR)*cW;ctx.strokeStyle='rgba(0,229,255,.3)';ctx.setLineDash([4,3]);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(tx,pad.t);ctx.lineTo(tx,pad.t+cH);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='rgba(0,229,255,.4)';ctx.font='9px Space Mono,monospace';ctx.fillText('tumor wall',tx+3,pad.t+11);}
+    ctx.strokeStyle=colors[ci];ctx.lineWidth=ci===1?2.5:1.5;
+    ctx.setLineDash(ci===0?[5,3]:[]);ctx.lineJoin='round';
+    ctx.beginPath();
+    curve.forEach((v,i)=>{const x=pad.l+(i/maxR)*cW,y=pad.t+cH*(1-v);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+    ctx.stroke();ctx.setLineDash([]);
+  });
+  // Legend
+  curves.forEach(({n},ci)=>{
+    const lx=pad.l+ci*206,ly=H-10;
+    ctx.strokeStyle=colors[ci];ctx.lineWidth=ci===1?2.5:1.5;ctx.setLineDash(ci===0?[5,3]:[]);
+    ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(lx+18,ly);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=colors[ci];ctx.font='10px Space Mono,monospace';ctx.fillText(labels[ci],lx+22,ly+4);
+  });
+  ctx.fillStyle='rgba(99,130,166,.4)';ctx.font='10px Space Mono,monospace';
+  ctx.fillText('Radial distance (normalised grid units)',pad.l+cW/2-130,H-28);
+  ctx.save();ctx.translate(12,pad.t+cH/2);ctx.rotate(-Math.PI/2);ctx.textAlign='center';ctx.fillStyle='rgba(99,130,166,.4)';ctx.font='10px Space Mono,monospace';ctx.fillText('Mean concentration',0,0);ctx.restore();
+}
 </script>
 </body>
 </html>
