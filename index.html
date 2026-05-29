@@ -3741,7 +3741,7 @@ function _renderSensitivityResults(results,baseline){
   }).join('');
   _drawSensitivityTornado(document.getElementById('sensi-tornado'),results,baseline);
   const most=results[0],least=results[results.length-1];
-  const regimeMap={D:'diffusion-dominated — ECM tortuosity is the primary bottleneck',λ:'clearance-dominated — plasma half-life is the main constraint',k:'uptake-dominated — receptor/transporter expression drives delivery efficacy',r:'geometry-limited — tumour radius governs the diffusion length scale',v₀:'convection-dominated — IFP is the dominant transport barrier'};
+  const regimeMap={D:'diffusion-dominated — ECM tortuosity is the primary bottleneck',λ:'clearance-dominated — plasma half-life is the main constraint',k:'uptake-dominated — receptor/transporter expression drives delivery efficacy',r:'geometry-limited — tumour radius governs the diffusion length scale','v₀':'convection-dominated — IFP is the dominant transport barrier'};
   const regime=regimeMap[most.sym]||'parameter-sensitive';
   document.getElementById('sensi-interpretation').innerHTML=`
     <p><strong>Most influential:</strong> ${most.name} (SI = ${most.SI.toFixed(3)}) — a ±20% perturbation shifts tumour average C by ${(most.SI*200).toFixed(1)}% relative to baseline. The model is in a <strong>${regime}</strong>.</p>
