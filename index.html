@@ -577,7 +577,13 @@ var _hmt = _hmt || [];
                 <option value="liposomal_paclitaxel">Liposomal Paclitaxel</option>
                 <option value="micellar_paclitaxel">Micellar Paclitaxel</option>
                 <option value="cisplatin">Cisplatin</option><option value="gemcitabine">Gemcitabine</option>
-                <option value="trastuzumab">Trastuzumab (ADC)</option><option value="custom">Custom (AI)</option>
+                <option value="trastuzumab">Trastuzumab (ADC)</option><option value="oxaliplatin">Oxaliplatin</option>
+                <option value="bevacizumab">Bevacizumab</option>
+                <option value="pembrolizumab">Pembrolizumab</option>
+                <option value="erlotinib">Erlotinib</option>
+                <option value="liposomal_doxorubicin">Liposomal Doxorubicin (Doxil)</option>
+                <option value="pertuzumab">Pertuzumab (HER2)</option>
+                <option value="custom">Custom (AI)</option>
               </select>
             </div>
             <div><label>Tumor type</label>
@@ -1390,6 +1396,36 @@ const DB=[
   {drug:'5-Fluorouracil',tumor:'breast',D:.10,lam:.004,k:.07,r:22,diff:'low',cls:'Antimetabolite'},
   {drug:'Temozolomide',tumor:'glioma',D:.18,lam:.002,k:.06,r:20,diff:'low',cls:'Alkylating agent'},
   {drug:'Dacarbazine',tumor:'melanoma',D:.08,lam:.005,k:.065,r:24,diff:'medium',cls:'Alkylating agent'},
+  // ── NEW ENTRIES ──
+  // Oxaliplatin — third-generation platinum; key FOLFOX component for colorectal
+  // D slightly lower than cisplatin due to larger MW (397 Da vs 300 Da). Refs: Minchinton & Tannock 2006.
+  {drug:'Oxaliplatin',tumor:'colorectal',D:.09,lam:.004,k:.07,r:24,diff:'medium',cls:'Platinum'},
+  {drug:'Oxaliplatin',tumor:'pancreatic',D:.025,lam:.006,k:.045,r:28,diff:'very high',cls:'Platinum'},
+  // Bevacizumab — anti-VEGF monoclonal antibody (149 kDa); no HER2 binding, linear k
+  // D calibrated to IgG ECM diffusion. Used in colorectal, glioma, breast (off-label).
+  // Refs: Chauhan VP et al. 2011; Yuan et al. 1994 (antibody tumour penetration).
+  {drug:'Bevacizumab',tumor:'colorectal',D:.009,lam:.001,k:.04,r:24,diff:'high',cls:'Monoclonal Ab'},
+  {drug:'Bevacizumab',tumor:'glioma',D:.011,lam:.001,k:.035,r:20,diff:'medium',cls:'Monoclonal Ab'},
+  {drug:'Bevacizumab',tumor:'breast',D:.009,lam:.001,k:.04,r:22,diff:'high',cls:'Monoclonal Ab'},
+  // Pembrolizumab — anti-PD-1 checkpoint inhibitor (148 kDa); tumour microenvironment target
+  // Very low k: binds PD-1 on T cells in TME, not tumour cells directly — low effective cellular uptake.
+  // Refs: Thurber et al. 2008 (antibody penetration framework); Ribas & Wolchok 2018.
+  {drug:'Pembrolizumab',tumor:'melanoma',D:.007,lam:.0008,k:.025,r:24,diff:'high',cls:'Checkpoint Ab'},
+  {drug:'Pembrolizumab',tumor:'breast',D:.007,lam:.0008,k:.020,r:22,diff:'high',cls:'Checkpoint Ab'},
+  // Erlotinib — EGFR tyrosine kinase inhibitor (small molecule, 394 Da); oral agent
+  // High D (similar to cisplatin) due to small size; high k from EGFR-mediated internalisation.
+  // Refs: Ballard et al. 2006; Trédan et al. 2007.
+  {drug:'Erlotinib',tumor:'pancreatic',D:.11,lam:.004,k:.09,r:28,diff:'high',cls:'TKI'},
+  {drug:'Erlotinib',tumor:'glioma',D:.13,lam:.003,k:.085,r:20,diff:'medium',cls:'TKI'},
+  // Liposomal Doxorubicin (Doxil) — ~100nm pegylated liposome; very slow ECM diffusion
+  // D_eff via Stokes-Einstein for 100nm (similar to liposomal paclitaxel but dox payload).
+  // Slow release κ=0.004 (PEG coat prolongs circulation, retards release). Ref: Gabizon et al. 2003.
+  {drug:'Liposomal Doxorubicin (Doxil)',tumor:'breast',D:.0024,lam:.003,k:.04,r:22,diff:'medium',cls:'NP Anthracycline',particleNm:100,ifp:0.03,twoComp:true,krel:0.004,phi:1.0,note:'~100nm PEGylated liposome; very slow release due to PEG coat. D_eff via Stokes-Einstein. Ref: Gabizon et al. 2003.'},
+  {drug:'Liposomal Doxorubicin (Doxil)',tumor:'pancreatic',D:.0009,lam:.004,k:.025,r:28,diff:'very high',cls:'NP Anthracycline',particleNm:100,ifp:0.10,twoComp:true,krel:0.004,phi:1.0},
+  // Pertuzumab — HER2 dimerisation antibody (148 kDa); used with trastuzumab in HER2+ breast
+  // Binds different HER2 epitope; slightly lower k than trastuzumab (complementary binding site).
+  // Refs: Cortés et al. 2012; Thurber et al. 2008 (HER2 antibody penetration framework).
+  {drug:'Pertuzumab',tumor:'breast',D:.01,lam:.001,k:.10,r:22,diff:'medium',cls:'Monoclonal Ab',receptorBinding:true,kon:1.2,koff:0.006,Bmax:0.8,kdeg:0.01,note:'HER2 domain II binding; complementary to trastuzumab. Da=kon·Bmax·R²/D≈8.6. Moderate binding-site barrier. Cortés et al. 2012.'},
 ];
 const PRESETS={};
 DB.forEach(d=>{PRESETS[d.drug.toLowerCase().replace(/[\s-]/g,'_')+'_'+d.tumor]=d;});
