@@ -3749,10 +3749,12 @@ function _renderSensitivityResults(results,baseline){
   }).join('');
   _drawSensitivityTornado(document.getElementById('sensi-tornado'),results,baseline);
   const most=results[0],least=results[results.length-1];
-  const regimeMap={D:'diffusion-dominated — ECM tortuosity is the primary bottleneck',λ:'clearance-dominated — plasma half-life is the main constraint',k:'uptake-dominated — receptor/transporter expression drives delivery efficacy',r:'geometry-limited — tumour radius governs the diffusion length scale','v₀':'convection-dominated — IFP is the dominant transport barrier'};
+  const second=results.length>1?results[1]:null;
+  const regimeMap={D:'diffusion-dominated — ECM tortuosity is the primary bottleneck',λ:'clearance-dominated — plasma half-life is the main constraint',k:'uptake-dominated — receptor/transporter expression drives delivery efficacy',r:'geometry-sensitive — tumour radius governs the drug-accessible volume','v₀':'convection-dominated — IFP is the dominant transport barrier'};
   const regime=regimeMap[most.sym]||'parameter-sensitive';
+  const codom=second&&second.SI>most.SI*0.5?`D is also substantial (SI = ${second.SI.toFixed(3)}), indicating a co-dominant <strong>diffusion-geometry interaction</strong>. In IV-infusion mode, r sensitivity partly reflects how the averaging region shifts relative to the drug source — ring or tumor_surface delivery would reduce this geometric effect.`:'';
   document.getElementById('sensi-interpretation').innerHTML=`
-    <p><strong>Most influential:</strong> ${most.name} (SI = ${most.SI.toFixed(3)}) — a ±20% perturbation shifts tumour average C by ${(most.SI*200).toFixed(1)}% relative to baseline. The model is in a <strong>${regime}</strong>.</p>
+    <p><strong>Most influential:</strong> ${most.name} (SI = ${most.SI.toFixed(3)}) — a ±20% perturbation shifts tumour average C by ${(most.SI*200).toFixed(1)}% relative to baseline. The model is in a <strong>${regime}</strong>. ${codom}</p>
     <p><strong>Least influential:</strong> ${least.name} (SI = ${least.SI.toFixed(3)}) — less than ${(least.SI*200).toFixed(1)}% change per ±20% perturbation. This parameter can be assigned with lower precision without significantly affecting model output.</p>
     <p><strong>Note:</strong> This is an OAT (one-at-a-time) local sensitivity analysis — parameter interactions are not captured. For D×k interaction surface, see the Sweep tab. OAT does not apply to the receptor binding (kon/koff/Bmax) or two-compartment (κ) parameters, which use separate solver branches.</p>
     <p style="font-size:.78rem;color:var(--text3);">For your paper: SI values may be reported as a local sensitivity analysis. Cite as: each parameter was independently perturbed ±20% from its nominal value; SI = |f(p×1.2) − f(p×0.8)| / (2f(p)) where f is tumour average concentration.</p>`;
