@@ -3669,8 +3669,26 @@ async function runSensitivity(){
   document.getElementById('sensi-prog').style.width='0%';
   const p=simResult.p;
   const cx=Math.floor(N/3),cy=N/2,dx=1/N;
+  // Always recompute baseline with pdeChunk/pdeChunkIFP — matches the perturbation solver.
+  // Critical for receptor-binding (trastuzumab) and two-compartment (nab-Paclitaxel) drugs
+  // whose simResult used a different solver, giving an incompatible baseline.
+  document.getElementById('sensi-status').textContent='Computing sensitivity baseline…';
+  await new Promise(res=>setTimeout(res,0));
+  const _dtB=Math.min(dx*dx/(4*p.D+1e-10),p.ifp>0?dx/(p.ifp+1e-10):Infinity)*0.9;
+  const _CB=initC(p.mode,cx,cy,p.r);
+  const _rhoB=buildRho(cx,cy,p.r,null);
+  const _DfB=buildDField(cx,cy,p.r,p.D);
+  if(p.ifp>0){
+    const{vx:_vxB,vy:_vyB}=buildIFPField(cx,cy,p.r,p.ifp);
+    pdeChunkIFP(_CB,_DfB,_rhoB,_vxB,_vyB,dx,_dtB,p.lam,p.k,p.phi,p.steps,p.mode,1,cx,cy,p.r);
+  } else {
+    pdeChunk(_CB,_DfB,_rhoB,dx,_dtB,p.lam,p.k,p.phi,p.steps,p.mode,1,cx,cy,p.r);
+  }
+  let _bSum=0,_bCnt=0;
+  for(let _by=0;_by<N;_by++) for(let _bx=0;_bx<N;_bx++)
+    if(Math.sqrt((_bx-cx)**2+(_by-cy)**2)<=p.r){_bSum+=_CB[_by*N+_bx];_bCnt++;}
   const baseline={
-    tumorAvg:parseFloat(simResult.metrics.tumorAvg),
+    tumorAvg:_bCnt>0?_bSum/_bCnt:parseFloat(simResult.metrics.tumorAvg),
     coverage:parseFloat(simResult.metrics.coverage),
     depth50:simResult.metrics.depth50
   };
@@ -3756,7 +3774,7 @@ function _renderSensitivityResults(results,baseline){
   document.getElementById('sensi-interpretation').innerHTML=`
     <p><strong>Most influential:</strong> ${most.name} (SI = ${most.SI.toFixed(3)}) — a ±20% perturbation shifts tumour average C by ${(most.SI*200).toFixed(1)}% relative to baseline. The model is in a <strong>${regime}</strong>. ${codom}</p>
     <p><strong>Least influential:</strong> ${least.name} (SI = ${least.SI.toFixed(3)}) — less than ${(least.SI*200).toFixed(1)}% change per ±20% perturbation. This parameter can be assigned with lower precision without significantly affecting model output.</p>
-    <p><strong>Note:</strong> This is an OAT (one-at-a-time) local sensitivity analysis — parameter interactions are not captured. For D×k interaction surface, see the Sweep tab. OAT does not apply to the receptor binding (kon/koff/Bmax) or two-compartment (κ) parameters, which use separate solver branches.</p>
+    <p><strong>Note:</strong> This is an OAT (one-at-a-time) local sensitivity analysis — parameter interactions are not captured. For D×k interaction surface, see the Sweep tab. All runs (including baseline) use linear uptake (pdeChunk), so kon/koff/Bmax and κ are not perturbed. For receptor-binding drugs (e.g. trastuzumab), this reflects sensitivity of the linear-k approximation, not the full two-state binding model.</p>
     <p style="font-size:.78rem;color:var(--text3);">For your paper: SI values may be reported as a local sensitivity analysis. Cite as: each parameter was independently perturbed ±20% from its nominal value; SI = |f(p×1.2) − f(p×0.8)| / (2f(p)) where f is tumour average concentration.</p>`;
 }
 function _drawSensitivityTornado(canvas,results,baseline){
