@@ -443,7 +443,7 @@ var _hmt = _hmt || [];
           <span class="hero-chip">FDM · FTCS + upwind</span>
           <span class="hero-chip">80 × 80 grid</span>
           <span class="hero-chip">IFP convection</span>
-          <span class="hero-chip">validated vs spheroid data</span>
+          <span class="hero-chip">3 drugs benchmarked vs digitised spheroid data</span>
           <span class="hero-chip">parameter sweep</span>
           <span class="hero-chip">Python export</span>
           <span class="hero-chip">LaTeX snippet</span>
@@ -572,17 +572,24 @@ var _hmt = _hmt || [];
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;">
             <div><label>Drug</label>
               <select id="drug-select" onchange="loadPreset()">
-                <option value="doxorubicin">Doxorubicin</option><option value="paclitaxel">Paclitaxel</option>
-                <option value="nab_paclitaxel">nab-Paclitaxel (Abraxane)</option>
-                <option value="liposomal_paclitaxel">Liposomal Paclitaxel</option>
-                <option value="micellar_paclitaxel">Micellar Paclitaxel</option>
-                <option value="cisplatin">Cisplatin</option><option value="gemcitabine">Gemcitabine</option>
-                <option value="trastuzumab">Trastuzumab (ADC)</option><option value="oxaliplatin">Oxaliplatin</option>
-                <option value="bevacizumab">Bevacizumab</option>
-                <option value="pembrolizumab">Pembrolizumab</option>
-                <option value="erlotinib">Erlotinib</option>
-                <option value="liposomal_doxorubicin">Liposomal Doxorubicin (Doxil)</option>
-                <option value="pertuzumab">Pertuzumab (HER2)</option>
+                <optgroup label="✓ RMSE-benchmarked">
+                  <option value="doxorubicin">Doxorubicin</option>
+                  <option value="cisplatin">Cisplatin</option>
+                  <option value="trastuzumab">Trastuzumab (ADC)</option>
+                </optgroup>
+                <optgroup label="~ Semi-empirical estimates">
+                  <option value="paclitaxel">Paclitaxel</option>
+                  <option value="nab_paclitaxel">nab-Paclitaxel (Abraxane)</option>
+                  <option value="liposomal_paclitaxel">Liposomal Paclitaxel</option>
+                  <option value="micellar_paclitaxel">Micellar Paclitaxel</option>
+                  <option value="gemcitabine">Gemcitabine</option>
+                  <option value="oxaliplatin">Oxaliplatin</option>
+                  <option value="bevacizumab">Bevacizumab</option>
+                  <option value="pembrolizumab">Pembrolizumab</option>
+                  <option value="erlotinib">Erlotinib</option>
+                  <option value="liposomal_doxorubicin">Liposomal Doxorubicin (Doxil)</option>
+                  <option value="pertuzumab">Pertuzumab (HER2)</option>
+                </optgroup>
                 <option value="custom">Custom (AI)</option>
               </select>
             </div>
@@ -1120,7 +1127,7 @@ var _hmt = _hmt || [];
               <tbody id="val-summary-tbody"></tbody>
             </table>
           </div>
-          <p style="font-size:.78rem;color:var(--text3);margin-top:1rem;margin-bottom:0;">RMSE computed over n=8 radial positions in normalised concentration units. Good: RMSE &lt; 0.08 · Acceptable: &lt; 0.20 · Poor: ≥ 0.20.</p>
+          <p style="font-size:.78rem;color:var(--text3);margin-top:1rem;margin-bottom:0;">RMSE computed over n=8 radial positions in normalised concentration units. Good: RMSE &lt; 0.08 · Acceptable: &lt; 0.12 · Poor: ≥ 0.12.</p>
         </div>
       </div>
     </div>
@@ -1347,7 +1354,7 @@ var _hmt = _hmt || [];
       <span class="cite-title">Cite us</span>
       <span class="cite-text">Yang ZT, Shi Y. PDEOncology: Tumor Drug Penetration Simulator using Reaction-Diffusion-Convection PDEs with IFP Convection, 2026.</span>
     </div>
-    <a href="https://github.com/SYM19/tumor-drug-penetration-model" target="_blank">GitHub ↗</a>
+    <a href="https://github.com/SYM19/PDEOncology" target="_blank">GitHub ↗</a>
   </footer>
   <div id="help-overlay" class="help-overlay" onclick="closeSliderHelp()"></div>
   <div id="help-pop" class="help-pop" role="dialog" aria-modal="true" aria-hidden="true"></div>
@@ -2101,7 +2108,7 @@ async function runSingleValidation(datasetIdx){
   }
   const modelCurve=radialCurve(C,cx,cy);
   const{profile,rmse,maxErr}=computeValidationRMSE(modelCurve,ds.points,p.r);
-  const grade = rmse<.08?'good':rmse<.20?'ok':'poor';
+  const grade = rmse<.08?'good':rmse<.12?'ok':'poor';
   return{modelCurve:Array.from(modelCurve),profile,rmse:rmse.toFixed(4),maxErr:maxErr.toFixed(4),grade,C:Array.from(C),cx,cy};
 }
 
@@ -2230,7 +2237,7 @@ th{background:#f5f5f5;}.rmse-good{color:#1a7a3c;font-weight:bold;}.rmse-ok{color
 </style></head><body>
 <h1>PDEOncology v0.6 — Model Validation Report</h1>
 <p>Generated: ${new Date().toISOString()}</p>
-<p>Model validated against 3 published multicellular spheroid datasets. RMSE computed in normalised concentration units over n=8 radial positions per dataset.</p>
+<p>Model benchmarked against digitised data from 3 published multicellular spheroid datasets. RMSE computed in normalised concentration units over n=8 radial positions per dataset.</p>
 <h2>Validation datasets</h2>
 <table><tr><th>Drug</th><th>Source</th><th>D</th><th>λ</th><th>k</th><th>RMSE</th><th>Agreement</th></tr>
 ${VALIDATION_DATASETS.map(ds=>{const r=valResults[ds.id]||{rmse:'—',grade:'—'};return`<tr><td>${ds.drug}</td><td>${ds.cite}</td><td>${ds.params.D}</td><td>${ds.params.lam}</td><td>${ds.params.k}</td><td class="rmse-${r.grade||'ok'}">${r.rmse}</td><td class="${'rmse-'+(r.grade||'ok')}">${r.grade}</td></tr>`}).join('')}
@@ -3044,7 +3051,7 @@ Parameters used in this simulation: $D = ${p.D}$, $\\lambda = ${p.lam}$, $k = ${
 tumor radius $R = ${p.r}$ grid units, delivery mode: ${modeStr}.
 Simulation run for ${p.steps} time steps.
 
-All simulations were performed using PDEOncology v0.6 (\\url{https://github.com/SYM19/tumor-drug-penetration-model}).
+All simulations were performed using PDEOncology v0.6 (\\url{https://github.com/SYM19/PDEOncology}).
 
 % References to cite:
 % \\cite{Jain1987} Jain RK. Cancer Res 47(12):3039, 1987.
@@ -3247,7 +3254,7 @@ function exportSVGFigure(){
   svg+=`<text x="${pad.l+8}" y="${pad.t+18}" fill="#8b9bb4" font-size="9">D=${p.D} · λ=${p.lam} · k=${p.k}</text>`;
   svg+=`<text x="${pad.l+8}" y="${pad.t+30}" fill="#8b9bb4" font-size="9">r=${p.r}px · steps=${p.steps}</text>`;
   svg+=`<text x="${pad.l+8}" y="${pad.t+42}" fill="#8b9bb4" font-size="9">PDEOncology v0.6</text>`;
-  svg+=`<text x="${pad.l+8}" y="${pad.t+54}" fill="#4d5f73" font-size="8">github.com/SYM19/tumor-drug-penetration-model</text>`;
+  svg+=`<text x="${pad.l+8}" y="${pad.t+54}" fill="#4d5f73" font-size="8">github.com/SYM19/PDEOncology</text>`;
   svg+=`</svg>`;
   const blob=new Blob([svg],{type:'image/svg+xml'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`PDEOncology_${p.drug}_${p.tumor}.svg`;a.click();
@@ -3398,7 +3405,7 @@ ${_twoComp?`
 
 <div class="note">⚠ Model disclaimer: Parameters are normalised and semi-empirical. Results are for exploratory research use only and are not validated for clinical decision-making. Experimental data points in built-in validation sets are approximate digitizations (±5–10% error).</div>
 
-<div class="disclaimer">PDEOncology v0.6 · Yang ZT, Shi Y. PDEOncology: Tumor Drug Penetration Simulator using Reaction-Diffusion-Convection PDEs with IFP Convection, 2026. · github.com/SYM19/tumor-drug-penetration-model · AGPL-3.0</div>
+<div class="disclaimer">PDEOncology v0.6 · Yang ZT, Shi Y. PDEOncology: Tumor Drug Penetration Simulator using Reaction-Diffusion-Convection PDEs with IFP Convection, 2026. · github.com/SYM19/PDEOncology · AGPL-3.0</div>
 </div></body></html>`;
 
   const w=window.open('','_blank');
